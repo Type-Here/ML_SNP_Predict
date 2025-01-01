@@ -1,0 +1,13 @@
+name: fia_env
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - pandas=2.2.2
+  - requests=2.32.3
+  - matplotlib=3.8.0
+  - pip
+  - pip:
+      - pyqt5
+      - scikit-learn
