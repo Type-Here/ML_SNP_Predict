@@ -5,9 +5,10 @@
 
 import os
 import tensorflow as tf
-from tensorflow.python.keras.models import Sequential
-from tensorflow.python.keras.layers import Dense, Dropout
-from tensorflow.python.keras.layers import Input
+#from tensorflow.python.keras.models import Sequential
+#from tensorflow.python.keras.layers import Dense, Dropout
+from keras.api.models import Sequential
+from keras.api.layers import Dense, Dropout, Input
 from src import P53_MODEL_DIR, P53_MODEL_NAME
 
 def p53_train_model(X_train, y_train, X_test, y_test) -> tuple[tf.keras.Model, tf.keras.callbacks.History]:
@@ -80,18 +81,30 @@ def save_model(model: tf.keras.Model, name: str = P53_MODEL_NAME):
             name: The name of the model
     """
 
-    path = f"{P53_MODEL_DIR}/{name}.h5"
+    model_path = f"{P53_MODEL_DIR}/{name}.h5"
     keras_path = f"{P53_MODEL_DIR}/{name}.keras"
 
-    if os.path.exists(dir) is False:
-        os.makedirs(dir)
-    
-    elif os.path.exists(path):
-        os.remove(path + ".bak")
-        os.rename(src=path, dst= path + ".bak")
+    try:
+        if os.path.exists(P53_MODEL_DIR) is False:
+            os.makedirs(P53_MODEL_DIR)
 
-    if os.path.exists(keras_path):
-        os.rename(src=keras_path, dst=keras_path + ".bak")      
+        elif os.path.exists(model_path):
+            back_path = model_path + ".bak"
+            if os.path.exists(back_path):
+                os.remove(back_path)
+            os.rename(src=model_path, dst= model_path + ".bak")
 
-    model.save(path)
-    model.save(keras_path)
+        if os.path.exists(keras_path):
+            back_path = keras_path + ".bak"
+            if os.path.exists(back_path):
+                os.remove(back_path)
+            os.rename(src=keras_path, dst=keras_path + ".bak")      
+
+        model.save(model_path)
+        model.save(keras_path)
+
+    except Exception as e:
+        print(f"Error saving model: {e}")
+        print("Trying to save the model with alternative name: `alt.h5`...")
+        model.save(f"{P53_MODEL_DIR}/alt.h5")
+        return
