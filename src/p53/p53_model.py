@@ -10,7 +10,7 @@ from tensorflow.python.keras.layers import Dense, Dropout
 from tensorflow.python.keras.layers import Input
 from src import P53_MODEL_DIR, P53_MODEL_NAME
 
-def p53_model(X_train, y_train, X_test, y_test) -> tuple[tf.keras.Model, tf.keras.callbacks.History]:
+def p53_train_model(X_train, y_train, X_test, y_test) -> tuple[tf.keras.Model, tf.keras.callbacks.History]:
     """
         Create and train the p53 MLP model.
         Model architecture:
