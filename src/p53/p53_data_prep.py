@@ -3,8 +3,8 @@ import numpy as np
 import re
 
 
-def p53_cleaning(dataset, pfam = False):
-    if not dataset:
+def p53_cleaning(dataset: pd.DataFrame, pfam: bool = False) -> pd.DataFrame:
+    if dataset.empty:
         return None
     
     data = filter_by_snp(dataset)
@@ -13,11 +13,10 @@ def p53_cleaning(dataset, pfam = False):
     data = data_treatment(data)
     data = feature_derivation(data)
 
-
-    return dataset
-
+    return data
 
 
+# -----------------  Data Cleaning Functions ----------------- #
 
 def filter_by_snp(data):
     """
@@ -60,7 +59,12 @@ def drop_columns(data):
         'Final comment',  # Textual comment
         'Records_Number',
 
-        'CpG', 'Substitution type','Tumor_Freq','Somatic_Freq 2','Germline_Freq 2' # Little info or non used
+        'CpG', 'Substitution type','Tumor_Freq','Somatic_Freq 2','Germline_Freq 2', # Little info or non used
+        
+        # Could be useful but not for this analysis
+        'WT AA_3',
+        'Mutant AA_3', 'Mutational_event', 'Variant_Classification',
+        'Variant_Type', 'Mutation_Type'
         ]
 
     # Drop unnecessary columns
@@ -72,6 +76,10 @@ def drop_columns(data):
 
     return snp_data_cleaned
 
+# -----------------  End of Data Cleaning Functions ----------------- #
+
+
+# -----------------  Nan Data Handling Functions ----------------- #
 
 def nan_handling(data, pfam):
     """
@@ -100,7 +108,6 @@ def nan_handling(data, pfam):
     return snp_data_cleaned
 
 
-## -----------------  Used by nan_handling ----------------- ##
 
 def domain_imputation(data):
     """
@@ -155,14 +162,17 @@ def find_closest_or_default_domain(codon, known_data):
     
 
 
-    ## ------------------ End of nan_handling ------------------ ##
+## ------------------ End of nan_handling ------------------ ##
 
+
+# -----------------  Data Treatment Functions ----------------- #
 
 def data_treatment(data):
     """
         Treats the data for the p53 protein.
         Codon: Converts 'Codon' column to numeric values and replaces non-numeric values with -1.
         WT_Codon and Mutant_Codon: Standardizes values by replacing non-standard strings with 'III'.
+        WT AA_1 and Mutant AA_1: Cleans amino acids and introns.
     """
 
     # -- Codon column -- #
@@ -195,10 +205,30 @@ def data_treatment(data):
 
     # Verify the result
     print("\nUpdated columns (non-standard replaced with 'III'):")
+
+
+    # -- WT AA_1 and Mutant AA_1 columns -- #
+    # -- Clean amino acids and introns -- #
+
+    columns_to_check = ['WT AA_1','Mutant AA_1']
+    for v in columns_to_check:
+        data[v] = data[v].apply(clean_amino_acids_introns)
+
     return data
 
 
+def clean_amino_acids_introns(variant):
+  if variant == '*':
+     return '0'
+  if re.match(r'^\w$', variant):
+    return variant
+  else:
+    return '0'
 
+
+# -----------------  End of Data Treatment Functions ----------------- #
+
+# -----------------  Feature Derivation Functions ----------------- #
 
 def feature_derivation(data):
     """
@@ -218,7 +248,6 @@ def feature_derivation(data):
 
     return data
 
-# -----------------  Feature Derivation Functions ----------------- #
 
 def codons_split(data):
     """
