@@ -4,8 +4,29 @@ import requests
 import zipfile
 from src.config import DATA_PATH
 
+def load_data(protein='p53'):
+    """
+        Load the data for the specified protein.
+    
+        Args:
+            protein (str): The name of the protein for which the data is to be loaded. Default is 'p53'.
+    
+        Returns:
+            pd.DataFrame: The DataFrame containing the data for the specified protein.
+    """
+    
+    match protein:
+        case 'p53': 
+            return _ensure_p53_data()
 
-def ensure_p53_data():
+        case _: 
+            ValueError(f"Protein {protein} not supported.")
+
+
+
+
+# Internal function to ensure p53 data is available
+def _ensure_p53_data():
     """
         Ensures that the p53 data file is available and ready for use.
     
@@ -68,23 +89,3 @@ def ensure_p53_data():
     #print(f"File salvato in: {processed_path}")
     
     return df
-
-
-def load_data(protein='p53'):
-    """
-        Load the data for the specified protein.
-    
-        Args:
-            protein (str): The name of the protein for which the data is to be loaded. Default is 'p53'.
-    
-        Returns:
-            pd.DataFrame: The DataFrame containing the data for the specified protein.
-    """
-    
-    match protein:
-        case 'p53': 
-            return ensure_p53_data()
-
-        case _: 
-            ValueError(f"Protein {protein} not supported.")
-
