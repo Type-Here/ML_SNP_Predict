@@ -11,3 +11,4 @@ dependencies:
   - pip:
       - pyqt5
       - scikit-learn
+      - imbalanced-learn
