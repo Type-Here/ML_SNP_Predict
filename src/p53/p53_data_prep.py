@@ -19,10 +19,10 @@ def filter_by_snp(data):
         Filters the data to keep only SNP mutations.
     """
     # Filter only SNP mutations
-    snv_data = data[data['Variant_Type'] == 'SNP']
-    print(f"Mutazioni SNP trovate: {snv_data.shape[0]}")
+    snp_data = data[data['Variant_Type'] == 'SNP']
+    print(f"Mutazioni SNP trovate: {snp_data.shape[0]}")
 
-    return snv_data
+    return snp_data
 
 
 def drop_columns(data):
@@ -122,6 +122,8 @@ def domain_imputation(data):
     print("\nUpdated 'Domain' distribution:")
     print(data['Domain'].value_counts())
 
+    return data
+
 
 # Function to find the closest domain or return 'Intron' for missing codons
 def find_closest_or_default_domain(codon, known_data):
@@ -151,4 +153,41 @@ def find_closest_or_default_domain(codon, known_data):
     ## ------------------ End of nan_handling ------------------ ##
 
 
-    
+def data_treatment(data):
+    """
+        Treats the data for the p53 protein.
+        Codon: Converts 'Codon' column to numeric values and replaces non-numeric values with -1.
+        WT_Codon and Mutant_Codon: Standardizes values by replacing non-standard strings with 'III'.
+    """
+
+    # -- Codon column -- #
+
+    # Clean 'Codon' column by removing everything after and including the dash ('-')
+    data['Codon'] = data['Codon'].str.replace(r'-.*', '', regex=True)
+
+    ##-------------------------------#
+    # Replace values in 'Codon' containing 'ter' or 'Ter' with 0
+    data.loc[data['Codon'].str.contains(r'ter', case=False, na=False), 'Codon'] = 0
+
+    # Replace non-numeric values in 'Codon' with -1
+    data['Codon'] = data['Codon'].apply(lambda x: -1 if not str(x).isdigit() else int(x))
+
+    # Verify the result
+    print("\nUpdated 'Codon' column (non-numeric replaced with -1):")
+    print(data['Codon'].unique())
+
+
+    # -- WT_Codon and Mutant_Codon columns -- #
+
+    # Standardize WT_Codon and Mutant_Codon by replacing non-standard strings with 'III'
+    # Some values contain non-standard characters or contain info like 'Splice': replace them with 'III'
+    columns_to_update = ['WT_Codon', 'Mutant_Codon']
+
+    for col in columns_to_update:
+        data[col] = data[col].apply(
+            lambda x: 'III' if not isinstance(x, str) or not x.isalpha() or len(x) != 3 else x.upper()
+        )
+
+    # Verify the result
+    print("\nUpdated columns (non-standard replaced with 'III'):")
+    return data
