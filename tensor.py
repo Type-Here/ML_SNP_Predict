@@ -12,7 +12,7 @@ def install_tensorflow():
         if nvidia_check.returncode == 0:
             print("NVIDIA GPU detected. Installing TensorFlow with CUDA support...")
             os.system(f"pip install tensorflow-gpu=={TF_VERSION}")
-            os.system(f"pip install keras=={KERAS_VERSION}"})
+            os.system(f"pip install keras=={KERAS_VERSION}")
             return
 
         # Verifica se esiste una GPU AMD
