@@ -1,4 +1,74 @@
-from src.data_load import load_data
+import os
+import tensorflow as tf
+import matplotlib.pyplot as plt
 
-df = load_data(protein = 'p53')
-print(df.head())
+from src.data_load import load_data
+from src.config import P53_MODEL_DIR, P53_MODEL_NAME
+
+import src.p53.p53_data_prep as p53_data_prep
+import src.p53.p53_encoding as p53_encoding
+import src.p53.p53_scaling as p53_scaling
+import src.p53.p53_data_balancing as p53_data_balancing
+import src.p53.p53_train_test_sets as p53_split
+import src.p53.p53_model as p53_model
+import model_evaluation as ev
+
+def main():
+    # If a p53 model exists, load it
+    if os.path.exists(f"{P53_MODEL_DIR}/{P53_MODEL_NAME}.h5"):
+        print("Model found.")
+        print("Loading model...")
+        model = tf.keras.models.load_model(f"{P53_MODEL_DIR}/{P53_MODEL_NAME}.h5")
+        model.trainable = False
+        model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+
+    # Otherwise, train a new model
+    else:
+        print("Model not found.")
+        print("Training a new model...")
+        data = load_data(protein = 'p53')
+        print(data.head())
+
+        # Preprocess the data
+        print("Preprocessing the data...")
+        
+        print("Cleaning the data...")
+        data = p53_data_prep.p53_cleaning(data)
+        
+        print("Encoding the data...")
+        data = p53_encoding.p53_encoding(data)
+        
+        print("Scaling the data...")
+        data = p53_scaling.p53_scaling(data)
+
+        print("Balancing the data...")
+        X_resampled, y_resampled = p53_data_balancing.balance_split_data(data)
+
+        print("Creating the training and test sets...")
+        X_train, X_test, y_train, y_test \
+            = p53_split.create_train_test_sets(X_data=X_resampled, y_labels=y_resampled)
+        
+        print("Training the model...")
+        model, history = p53_model.train_model(X_train, X_test, y_train, y_test)
+
+        print("Saving the model...")
+        p53_model.save_model(model)
+
+        print("Model saved.")
+
+        print("\nModel evaluation:")
+        eval.simple_evaluate_model(model, X_test, y_test)
+
+        print("\nCross-validation evaluation:")
+        ev.n_times_k_fold_eval(model, X_resampled, y_resampled, n_splits=10, n_repeats=10)
+
+        print("\nPlotting the accuracy...")
+        ev.plot_curve_auc(model, X_test, y_test)
+
+        
+    # If the model was trained or loaded, print the model summary
+    print("Model summary:")
+    print(model.summary())
+
+if __name__ == "__main__":
+    main()
