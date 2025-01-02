@@ -1,8 +1,8 @@
 import os
 import subprocess
 
-TF_VERSION = "2.17.1"
-KERAS_VERSION = "3.5.0"
+TF_VERSION = "2.18.0"
+KERAS_VERSION = "3.7.0"
 ROCM_VERSION = "6.3"
 
 def install_tensorflow():
