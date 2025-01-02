@@ -1,4 +1,7 @@
 import pandas as pd
+import numpy as np
+import re
+
 
 def p53_cleaning(dataset, pfam = False):
     if not dataset:
@@ -7,6 +10,8 @@ def p53_cleaning(dataset, pfam = False):
     data = filter_by_snp(dataset)
     data = drop_columns(data)
     data = nan_handling(data, pfam)
+    data = data_treatment(data)
+    data = feature_derivation(data)
 
 
     return dataset
@@ -190,4 +195,103 @@ def data_treatment(data):
 
     # Verify the result
     print("\nUpdated columns (non-standard replaced with 'III'):")
+    return data
+
+
+
+
+def feature_derivation(data):
+    """
+        Derives new features from existing columns.
+        WT_Codon: Splits into three separate columns for each nucleotide.
+        Mutant_Codon: Splits into three separate columns for each nucleotide.
+        cDNA_Position: Extracts the position from cDNA_variant.
+        cDNA_Ref and cDNA_Mut: Extracts the reference and mutant nucleotides from cDNA_variant.
+    """
+
+    data = codons_split(data) # Split Codon into three separate columns for each nucleotide
+    data = cDNA_Variant_extraction(data) # Derive cDNA_Position, cDNA_Ref, and cDNA_Mut from cDNA_variant
+
+    return data
+
+# -----------------  Feature Derivation Functions ----------------- #
+
+def codons_split(data):
+    """
+        Splits the 'WT_Codon' column into three separate columns for each nucleotide.
+        Splits the 'Mutant_Codon' column into three separate columns for each nucleotide.
+    """
+     # Separate WT_Codon into its three nucleotides
+    data['WT_Codon_First'] = data['WT_Codon'].str[0]
+    data['WT_Codon_Second'] = data['WT_Codon'].str[1]
+    data['WT_Codon_Third'] = data['WT_Codon'].str[2]
+
+    # Separate Mutant_Codon into its three nucleotides
+    data['Mutant_Codon_First'] = data['Mutant_Codon'].str[0]
+    data['Mutant_Codon_Second'] = data['Mutant_Codon'].str[1]
+    data['Mutant_Codon_Third'] = data['Mutant_Codon'].str[2]
+
+    return data
+
+
+def cDNA_Variant_extraction(data):
+    # Derive cDNA_Position from cDNA_variant
+    data['cDNA_Position'] = data['cDNA_variant'].apply(calculate_position)
+
+    # Derive cDNA_Ref and cDNA_Mut from cDNA_variant
+    data = ref_and_mut_from_cDNA_Variant(data)
+
+    # Remove cDNA_variant column
+    data = data.drop(columns=['cDNA_variant'])
+
+    return data
+
+
+# Function to calculate absolute position from cDNA_variant
+def calculate_position(variant):
+    try:
+        # Remove nucleotide change (e.g., G>A, T>C)
+        variant_cleaned = re.sub(r'[A-Z]>[A-Z]', '', variant)
+        variant_cleaned = re.sub(r'c.', '', variant_cleaned)
+
+        # Handle 3' UTR positions like "c.*5325"
+        if variant_cleaned.startswith('*'):
+            return int(variant_cleaned[1:])
+
+        # Handle downstream intronic positions like "c.-29+1002" or "c.30+200"
+        if '+' in variant_cleaned:
+            parts = variant_cleaned.split('+')
+            if len(parts) == 2:
+                base, offset = parts
+                return int(base) + int(offset)
+
+        # Handle upstream intronic positions like "c.-28-1001"
+        if '-' in variant_cleaned:
+            parts = variant_cleaned.split('-')
+            if len(parts) == 2:
+                base, offset = parts
+                if base == '':
+                  base = '0'
+                return int(base) - int(offset)
+            if len(parts) == 3:
+                empty, base, offset = parts
+                return - int(base) - int(offset)
+
+        # Handle simple numeric positions like "c.742"
+        if re.match(r'\d+$', variant_cleaned):
+            return int(re.search(r'(\d+)', variant_cleaned).group(1))
+
+        # Return NaN for unhandled cases
+        print(f"No error but -1: {variant}")
+        return -1
+    except Exception as e:
+        print(f"Error processing variant {variant}: {e}")
+        return np.nan
+    
+
+def ref_and_mut_from_cDNA_Variant(data):
+    # Extract wild-type and mutant nucleotides
+    data['cDNA_Ref'] = data['cDNA_variant'].str.extract(r'c\.[\d*+-]+([A-Z])>', expand=False)
+    data['cDNA_Mut'] = data['cDNA_variant'].str.extract(r'c\.[\d*+-]+[A-Z]>([A-Z])', expand=False)
+
     return data
