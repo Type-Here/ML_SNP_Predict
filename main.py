@@ -49,15 +49,19 @@ def main():
             = p53_split.create_train_test_sets(X_data=X_resampled, y_labels=y_resampled)
         
         print("Training the model...")
-        model, history = p53_model.train_model(X_train, X_test, y_train, y_test)
+        model, history = p53_model.p53_train_model(X_train, X_test, y_train, y_test)
 
         print("Saving the model...")
         p53_model.save_model(model)
 
         print("Model saved.")
+        print("Evaluating the model...")
+
+        print("\nModel history - Accuracy plot:")
+        ev.plot_accuracy(history)
 
         print("\nModel evaluation:")
-        eval.simple_evaluate_model(model, X_test, y_test)
+        ev.simple_evaluate_model(model, X_test, y_test)
 
         print("\nCross-validation evaluation:")
         ev.n_times_k_fold_eval(model, X_resampled, y_resampled, n_splits=10, n_repeats=10)
