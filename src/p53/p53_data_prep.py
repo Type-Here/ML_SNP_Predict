@@ -7,18 +7,18 @@ def p53_cleaning(dataset: pd.DataFrame, pfam: bool = False) -> pd.DataFrame:
     if dataset.empty:
         return None
     
-    data = filter_by_snp(dataset)
-    data = drop_columns(data)
-    data = nan_handling(data, pfam)
-    data = data_treatment(data)
-    data = feature_derivation(data)
+    data = _filter_by_snp(dataset)
+    data = _drop_columns(data)
+    data = _nan_handling(data, pfam)
+    data = _data_treatment(data)
+    data = _feature_derivation(data)
 
     return data
 
 
 # -----------------  Data Cleaning Functions ----------------- #
 
-def filter_by_snp(data):
+def _filter_by_snp(data):
     """
         Filters the data to keep only SNP mutations.
     """
@@ -29,7 +29,7 @@ def filter_by_snp(data):
     return snp_data
 
 
-def drop_columns(data):
+def _drop_columns(data):
     """
         Drops unnecessary columns from the dataset.
     """
@@ -81,7 +81,7 @@ def drop_columns(data):
 
 # -----------------  Nan Data Handling Functions ----------------- #
 
-def nan_handling(data, pfam):
+def _nan_handling(data, pfam):
     """
         Handles NaN values in the dataset.
     """
@@ -102,14 +102,14 @@ def nan_handling(data, pfam):
     if pfam:
         print("\nHandling NaN values in Pfam columns...") # TODO: Implement Pfam handling
     else:
-        snp_data_cleaned = domain_imputation(snp_data_cleaned)
+        snp_data_cleaned = _domain_imputation(snp_data_cleaned)
 
 
     return snp_data_cleaned
 
 
 
-def domain_imputation(data):
+def _domain_imputation(data):
     """
         Imputes missing 'Domain' values based on the closest known 'Codon'. \n
         Params:
@@ -124,7 +124,7 @@ def domain_imputation(data):
     # Apply the function to impute missing 'Domain' values
     imputed_domains = []
     for index, row in domain_missing.iterrows():
-        closest_domain = find_closest_or_default_domain(row['Codon'], domain_known)
+        closest_domain = _find_closest_or_default_domain(row['Codon'], domain_known)
         imputed_domains.append(closest_domain)
 
     # Assign the imputed domains back to the missing rows
@@ -138,7 +138,7 @@ def domain_imputation(data):
 
 
 # Function to find the closest domain or return 'Intron' for missing codons
-def find_closest_or_default_domain(codon, known_data):
+def _find_closest_or_default_domain(codon, known_data):
     """
         Find the closest domain to the given codon based on the known data.
         If the codon is not found, return 'Intron'. \n
@@ -167,7 +167,7 @@ def find_closest_or_default_domain(codon, known_data):
 
 # -----------------  Data Treatment Functions ----------------- #
 
-def data_treatment(data):
+def _data_treatment(data):
     """
         Treats the data for the p53 protein.
         Codon: Converts 'Codon' column to numeric values and replaces non-numeric values with -1.
@@ -212,12 +212,12 @@ def data_treatment(data):
 
     columns_to_check = ['WT AA_1','Mutant AA_1']
     for v in columns_to_check:
-        data[v] = data[v].apply(clean_amino_acids_introns)
+        data[v] = data[v].apply(_clean_amino_acids_introns)
 
     return data
 
 
-def clean_amino_acids_introns(variant):
+def _clean_amino_acids_introns(variant):
   if variant == '*':
      return '0'
   if re.match(r'^\w$', variant):
@@ -230,7 +230,7 @@ def clean_amino_acids_introns(variant):
 
 # -----------------  Feature Derivation Functions ----------------- #
 
-def feature_derivation(data):
+def _feature_derivation(data):
     """
         Derives new features from existing columns.
         WT_Codon: Splits into three separate columns for each nucleotide.
@@ -240,16 +240,16 @@ def feature_derivation(data):
     """
     print("\nDeriving new features...")
     
-    data = codons_split(data) # Split Codon into three separate columns for each nucleotide
+    data = _codons_split(data) # Split Codon into three separate columns for each nucleotide
     print("\nWT_Codon and Mutatn_Codon split into three separate columns each.")
 
-    data = cDNA_Variant_extraction(data) # Derive cDNA_Position, cDNA_Ref, and cDNA_Mut from cDNA_variant
+    data = _cDNA_Variant_extraction(data) # Derive cDNA_Position, cDNA_Ref, and cDNA_Mut from cDNA_variant
     print("\ncDNA_Position, cDNA_Ref, and cDNA_Mut derived from cDNA_variant.")
 
     return data
 
 
-def codons_split(data):
+def _codons_split(data):
     """
         Splits the 'WT_Codon' column into three separate columns for each nucleotide.
         Splits the 'Mutant_Codon' column into three separate columns for each nucleotide.
@@ -267,12 +267,12 @@ def codons_split(data):
     return data
 
 
-def cDNA_Variant_extraction(data):
+def _cDNA_Variant_extraction(data):
     # Derive cDNA_Position from cDNA_variant
-    data['cDNA_Position'] = data['cDNA_variant'].apply(calculate_position)
+    data['cDNA_Position'] = data['cDNA_variant'].apply(_calculate_position)
 
     # Derive cDNA_Ref and cDNA_Mut from cDNA_variant
-    data = ref_and_mut_from_cDNA_Variant(data)
+    data = _ref_and_mut_from_cDNA_Variant(data)
 
     # Remove cDNA_variant column
     data = data.drop(columns=['cDNA_variant'])
@@ -281,7 +281,7 @@ def cDNA_Variant_extraction(data):
 
 
 # Function to calculate absolute position from cDNA_variant
-def calculate_position(variant):
+def _calculate_position(variant):
     try:
         # Remove nucleotide change (e.g., G>A, T>C)
         variant_cleaned = re.sub(r'[A-Z]>[A-Z]', '', variant)
@@ -322,7 +322,7 @@ def calculate_position(variant):
         return np.nan
     
 
-def ref_and_mut_from_cDNA_Variant(data):
+def _ref_and_mut_from_cDNA_Variant(data):
     # Extract wild-type and mutant nucleotides
     data['cDNA_Ref'] = data['cDNA_variant'].str.extract(r'c\.[\d*+-]+([A-Z])>', expand=False)
     data['cDNA_Mut'] = data['cDNA_variant'].str.extract(r'c\.[\d*+-]+[A-Z]>([A-Z])', expand=False)
