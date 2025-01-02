@@ -6,7 +6,20 @@
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 
-def dna_position_norm(data:pd.DataFrame) -> pd.DataFrame:
+
+def p53_scaling(data:pd.DataFrame) -> pd.DataFrame:
+    """
+        Scale and normalize the p53 data.
+        Operations:
+        - Scale the cDNA_Position data.
+    """
+
+    # Scale the data
+    data = _dna_position_norm(data)
+
+    return data
+
+def _dna_position_norm(data:pd.DataFrame) -> pd.DataFrame:
     """
         Normalize the cDNA_Position data.\n
         Normalize the DNA position data to the range [0, 1].
