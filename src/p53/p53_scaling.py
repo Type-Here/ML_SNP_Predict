@@ -1,5 +1,6 @@
 """
     This module contains the functions to scale and normalize data in the p53 dataset.
+    3. This module should be the third module in the pipeline.
 """
 
 import pandas as pd

@@ -1,5 +1,6 @@
 """
     This module contains the p53 MLP model code.
+    6. This module should be the sixth module in the pipeline.
 """
 
 import os

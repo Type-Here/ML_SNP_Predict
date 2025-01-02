@@ -1,5 +1,6 @@
 """
     This module contains the functions to create the training and test sets for the p53 dataset.
+    5. This module should be the fifth module in the pipeline.
 """
 
 

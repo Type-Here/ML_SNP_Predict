@@ -1,3 +1,9 @@
+"""
+    This module contains the functions to encode the p53 dataset.
+    2. This module should be the second module in the pipeline.
+"""
+
+
 import pandas as pd
 from sklearn.preprocessing import OneHotEncoder
     

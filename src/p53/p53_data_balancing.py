@@ -1,5 +1,6 @@
 """
     This module contains the functions to balance the data for the p53 dataset.
+    4. This module should be the fourth module in the pipeline.
 """
 
 import pandas as pd

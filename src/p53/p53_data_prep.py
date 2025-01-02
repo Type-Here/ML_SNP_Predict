@@ -1,3 +1,8 @@
+"""
+    This module contains the functions to clean and prepare the p53 dataset.
+    1. Should the first module to be run in the pipeline.
+"""
+
 import pandas as pd
 import numpy as np
 import re
