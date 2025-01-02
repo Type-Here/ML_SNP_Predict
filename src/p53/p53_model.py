@@ -55,7 +55,7 @@ def p53_train_model(X_train, y_train, X_test, y_test) -> tuple[tf.keras.Model, t
     history = model.fit(
         X_train, tf.keras.utils.to_categorical(y_train),  # Convert labels to one-hot
         validation_data=(X_test, tf.keras.utils.to_categorical(y_test)),
-        epochs=50,  # Adjust based on performance
+        epochs=50,  # Adjusted based on performance
         batch_size=32,
         verbose=1
     )
@@ -108,3 +108,27 @@ def save_model(model: tf.keras.Model, name: str = P53_MODEL_NAME):
         print("Trying to save the model with alternative name: `alt.h5`...")
         model.save(f"{P53_MODEL_DIR}/alt.h5")
         return
+    
+
+
+
+def train_model_to_save(model, X_train, y_train) -> tuple[tf.keras.Model, tf.keras.callbacks.History]:
+    """
+        Train a model with all the given data in order to save it.
+        It does not split the data into training and test sets.
+        It doesn't save the model.
+        Returns:
+            The trained model and the training history.
+    """
+
+    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+
+    history = model.fit(
+        X_train, 
+        tf.keras.utils.to_categorical(y_train), 
+        epochs=50, 
+        batch_size=32, 
+        verbose=1
+    )
+
+    return model, history
