@@ -11,19 +11,11 @@ import tensorflow as tf
 
 import numpy as np
 
-def evaluate_model(model, X_test, y_test):
+def simple_evaluate_model(model, X_test, y_test):
     """
         Evaluate the model using the test set.
+        Print the accuracy, classification report, and confusion matrix.
     """
-    _print_eval(model, X_test, y_test)
-
-
-
-def _print_eval(model, X_test, y_test):
-    """
-        Plot the confusion matrix.
-    """
-
     # Get the predicted classes and probabilities
     y_pred, y_pred_probs, y_test_classes = _get_classes(model, X_test, y_test)
 
@@ -146,6 +138,7 @@ def plot_curve_auc(model, X_test, y_test):
     plt.show()
 
 
+# -------------------- Helper functions -------------------- #
 
 def _get_classes(model, X_test, y_test):
     """
