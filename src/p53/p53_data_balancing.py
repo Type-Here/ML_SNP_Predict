@@ -7,11 +7,18 @@ import pandas as pd
 from imblearn.over_sampling import SMOTE
 from sklearn.model_selection import train_test_split
 
-def balance_data(data: pd.DataFrame) -> tuple:
+def balance_split_data(data: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
     """
         Balance the data with SMOTE. \n
         Split the data into features and target.
         Perform SMOTE on the data.     
+
+        Args:
+            data (pd.DataFrame): The DataFrame containing the data to be balanced.
+        Returns:
+            tuple: The resampled data and the resampled target.
+
+
     """
 
     # Proceed with SMOTE
