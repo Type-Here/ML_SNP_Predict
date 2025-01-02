@@ -208,9 +208,13 @@ def feature_derivation(data):
         cDNA_Position: Extracts the position from cDNA_variant.
         cDNA_Ref and cDNA_Mut: Extracts the reference and mutant nucleotides from cDNA_variant.
     """
-
+    print("\nDeriving new features...")
+    
     data = codons_split(data) # Split Codon into three separate columns for each nucleotide
+    print("\nWT_Codon and Mutatn_Codon split into three separate columns each.")
+
     data = cDNA_Variant_extraction(data) # Derive cDNA_Position, cDNA_Ref, and cDNA_Mut from cDNA_variant
+    print("\ncDNA_Position, cDNA_Ref, and cDNA_Mut derived from cDNA_variant.")
 
     return data
 
@@ -295,3 +299,7 @@ def ref_and_mut_from_cDNA_Variant(data):
     data['cDNA_Mut'] = data['cDNA_variant'].str.extract(r'c\.[\d*+-]+[A-Z]>([A-Z])', expand=False)
 
     return data
+
+
+# -----------------  End of Feature Derivation Functions ----------------- #
+
