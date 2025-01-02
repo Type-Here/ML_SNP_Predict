@@ -22,30 +22,30 @@ def p53_encoding(dataset:pd.DataFrame, pfam:bool = False) -> pd.DataFrame:
     
     # Encode the data
 
-    data_encoded = wt_mut_nucleotide_encoding(dataset)
+    data_encoded = _wt_mut_nucleotide_encoding(dataset)
     print("Nucleotide encoding done")
 
-    data_encoded = cDNA_ref_mut_encoding(data_encoded)
+    data_encoded = _cDNA_ref_mut_encoding(data_encoded)
     print("cDNA encoding done")
 
-    data_encoded = amino_acid_encoding(data_encoded)
+    data_encoded = _amino_acid_encoding(data_encoded)
     print("Amino acid encoding done")
 
     if pfam:
         #data_encoded = pfam_domain_encoding(data_encoded) # TODO: Implement this function
         pass
     else:
-        data_encoded = p53_domain_encoding(data_encoded)
+        data_encoded = _p53_domain_encoding(data_encoded)
     print("p53 domain encoding done")
 
-    data_encoded = pathogenicity_encoding(data_encoded)
+    data_encoded = _pathogenicity_encoding(data_encoded)
     print("Pathogenicity encoding done")
 
     return data_encoded
 
 
 
-def wt_mut_nucleotide_encoding(dataset):
+def _wt_mut_nucleotide_encoding(dataset):
     """
         Encode the nucleotide data for the wild-type and mutant splitted codons.
     """   
@@ -57,7 +57,7 @@ def wt_mut_nucleotide_encoding(dataset):
                         'Mutant_Codon_First', 'Mutant_Codon_Second', 'Mutant_Codon_Third']
 
     # One-hot encoding
-    data = one_hot_encoding(dataset, columns_to_encode, nucleotide_categories)
+    data = __one_hot_encoding(dataset, columns_to_encode, nucleotide_categories)
 
     # Drop now unnecessary columns
     columns_to_drop = [
@@ -71,7 +71,7 @@ def wt_mut_nucleotide_encoding(dataset):
 
 
 
-def cDNA_ref_mut_encoding(dataset):
+def _cDNA_ref_mut_encoding(dataset):
     """
         Encode the cDNA reference and mutant data.
     """
@@ -80,12 +80,12 @@ def cDNA_ref_mut_encoding(dataset):
     columns_to_encode = ['cDNA_Ref', 'cDNA_Mut']
 
     # One-hot encoding
-    data_encoded = one_hot_encoding(dataset, columns_to_encode, nucleotide_categories)
+    data_encoded = __one_hot_encoding(dataset, columns_to_encode, nucleotide_categories)
 
     return data_encoded
 
 
-def amino_acid_encoding(dataset):
+def _amino_acid_encoding(dataset):
     """
         Encode the amino acid data.
     """
@@ -95,13 +95,13 @@ def amino_acid_encoding(dataset):
     columns_to_encode = ['WT AA_1','Mutant AA_1']
 
     # One-hot encoding
-    data_encoded = one_hot_encoding(dataset, columns_to_encode, aa_categories)
+    data_encoded = __one_hot_encoding(dataset, columns_to_encode, aa_categories)
 
     return data_encoded
 
 
 
-def p53_domain_encoding(dataset):
+def _p53_domain_encoding(dataset):
     """
         Encode the p53 domain data. Used for the p53 dataset if the Pfam domain data is not available or not used.
     """
@@ -121,7 +121,7 @@ def p53_domain_encoding(dataset):
 
 # ------------------------------ One-Hot Encoding ------------------------------ #
 
-def one_hot_encoding(dataset, columns_to_encode, categories):
+def __one_hot_encoding(dataset, columns_to_encode, categories):
     """
         Perform one-hot encoding on the specified columns.
     
@@ -169,7 +169,7 @@ def one_hot_encoding(dataset, columns_to_encode, categories):
 
 # ------------------------------ Pathogenicity Encoding ------------------------------ #
 
-def pathogenicity_encoding(dataset):
+def _pathogenicity_encoding(dataset):
     """
         Encode the 'Pathogenicity' column in the dataset.
         0: Benign 
@@ -199,3 +199,5 @@ def pathogenicity_encoding(dataset):
     #print(snv_data_cleaned['Pathogenicity'].value_counts())
 
     return dataset
+
+
