@@ -10,6 +10,8 @@ def p53_encoding(dataset:pd.DataFrame, pfam:bool = False) -> pd.DataFrame:
         - Encode the nucleotide data for the wild-type and mutant splitted codons.
         - Encode the cDNA reference and mutant data.
         - Encode the amino acid data of the wild-type and mutant columns.
+        - Encode the p53 domain data. Used for the p53 dataset if the Pfam domain data is not available or not used.
+        - Encode the pathogenicity data.
     
         Args:
             dataset (pd.DataFrame): The DataFrame containing the data to be encoded.
@@ -36,7 +38,10 @@ def p53_encoding(dataset:pd.DataFrame, pfam:bool = False) -> pd.DataFrame:
         data_encoded = p53_domain_encoding(data_encoded)
     print("p53 domain encoding done")
 
-    return dataset
+    data_encoded = pathogenicity_encoding(data_encoded)
+    print("Pathogenicity encoding done")
+
+    return data_encoded
 
 
 
@@ -161,3 +166,36 @@ def one_hot_encoding(dataset, columns_to_encode, categories):
     return data_cleaned
 
 
+
+# ------------------------------ Pathogenicity Encoding ------------------------------ #
+
+def pathogenicity_encoding(dataset):
+    """
+        Encode the 'Pathogenicity' column in the dataset.
+        0: Benign 
+        1: Pathogenic (Pathogenic, Likely Pathogenic)
+        2: VUS (Variant of Uncertain Significance)
+    """
+    # Map all unique values in 'Pathogenicity' to numeric classes
+    dataset['Pathogenicity'] = dataset['Pathogenicity'].map({
+        'Benign': 0,
+        'Pathogenic': 1,
+        'Likely Pathogenic': 1,
+        'VUS': 2,
+        'Possibly pathogenic': 2,
+        'Possibly Pathogenic': 2  # Adjust capitalization if needed
+    })
+
+    # Check for NaN values after mapping
+    if dataset['Pathogenicity'].isnull().any():
+        print("\nRows with NaN in 'Pathogenicity':")
+        print(dataset[dataset['Pathogenicity'].isnull()])
+        # Drop rows with NaN in 'Pathogenicity' (or handle as appropriate)
+        dataset = dataset.dropna(subset=['Pathogenicity'])
+        print("\nNaN rows dropped.")
+
+    # Verify class distribution after cleaning
+    #print("\nUpdated class distribution in 'Pathogenicity':")
+    #print(snv_data_cleaned['Pathogenicity'].value_counts())
+
+    return dataset
