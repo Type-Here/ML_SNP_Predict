@@ -14,12 +14,14 @@ from src.fasta.fasta_seq import get_fasta_sequence_by_model_name
 from src.models_usage import load_model_by_name, get_prediction
 from src.config import MODELS_DIR, DATA_PATH, PFAM_PATH, MODELS_STATS_DIR
 
-# Imposta dinamicamente il percorso QT_QPA_PLATFORM_PLUGIN_PATH
+# Set dinamically the path for QT_QPA_PLATFORM_PLUGIN_PATH
 os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = os.path.join(os.environ["CONDA_PREFIX"], "plugins", "platforms")
-os.environ["QT_QPA_PLATFORM"] = "xcb"  # Forza l'uso di xcb
+if sys.platform == "linux":
+    os.environ["QT_QPA_PLATFORM"] = "xcb"  # Fix for Linux: Could not find a Qt installation of ''; Force to use xcb
 
 from info import AUTHOR, VERSION
 from info_dialog import InfoDialog
+from stats_view import display_plots_in_layout, display_stats_in_textedit, get_model_name_from_common_name
 
 # Create Models, Pfam and Data Directories if they don't exist
 os.makedirs(MODELS_DIR, exist_ok=True)
