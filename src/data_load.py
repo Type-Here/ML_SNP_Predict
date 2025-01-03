@@ -89,3 +89,35 @@ def _ensure_p53_data():
     #print(f"File salvato in: {processed_path}")
     
     return df
+
+
+# ------------------------------ Save Dataset ------------------------------ #
+
+
+def save_processed_data(data, model_name, is_encoded=False):
+    """
+        Save the processed data to a CSV file.
+        If the data is encoded, the file name will include '_encoded'.
+    
+        Args:
+            data (pd.DataFrame): The processed data to save.
+            model_name (str): The name of the model for which the data is being saved.
+            is_encoded (bool): Whether the data is encoded. Default is False.
+
+        Returns:
+            str: The path to the saved file.
+    """
+    if is_encoded:
+        model_name += '_encoded'
+    save_path = os.path.join(DATA_PATH, 'processed', f"{model_name}_data.csv")
+
+    os.makedirs(os.path.join(DATA_PATH, 'processed'), exist_ok=True)
+    
+    if os.path.exists(save_path):
+        os.remove(save_path)
+
+    data.to_csv(save_path, index=False)
+    print(f"Dati salvati in: {save_path}")
+    return save_path
+
+
