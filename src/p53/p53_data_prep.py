@@ -69,7 +69,7 @@ def _drop_columns(data):
         # Could be useful but not for this analysis
         'WT AA_3',
         'Mutant AA_3', 'Mutational_event', 'Variant_Classification',
-        'Variant_Type', 'Mutation_Type'
+        'Variant_Type', 'Mutation_Type' # Variant_Type = SNP Already filtered
         ]
 
     # Drop unnecessary columns
