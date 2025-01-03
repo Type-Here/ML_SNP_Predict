@@ -1,6 +1,6 @@
 from PyQt5.QtCore import QThread, pyqtSignal
 
-from src.dataset_file_management import load_data
+from src.dataset_file_management import load_data, save_processed_data
 from src.config import P53_MODEL_NAME
 
 import src.p53.p53_data_prep as p53_data_prep
@@ -22,7 +22,7 @@ class TrainingThread(QThread):
         try:            
             self.log_signal.emit("Starting the training process...\n")
 
-            data = load_data(protein = 'p53')
+            data = load_data(protein = 'p53') # Loads saved data or downloads it if not present
             self.log_signal.emit(data.head(3))
 
             # Preprocess the data
@@ -30,12 +30,24 @@ class TrainingThread(QThread):
             
             self.log_signal.emit("Cleaning the data...")
             data = p53_data_prep.p53_cleaning(data)
+
+            data_save_path = save_processed_data(data, P53_MODEL_NAME) # Save the processed data Not Encoded and Scaled
+            if data_save_path:
+                self.log_signal.emit(f"Processed non encoded dataset saved to:  \n{data_save_path}\n")
+            else:
+                self.log_signal.emit("Error saving processed non encoded dataset.")
             
             self.log_signal.emit("Encoding the data...")
             data = p53_encoding.p53_encoding(data)
             
             self.log_signal.emit("Scaling the data...")
             data = p53_scaling.p53_scaling(data)
+
+            data_save_path = save_processed_data(data, P53_MODEL_NAME, is_encoded=True, ) # Save the processed data Encoded and Scaled but not Balanced
+            if data_save_path:
+                self.log_signal.emit(f"Processed Encoded dataset saved to:  \n{data_save_path}\n")
+            else:
+                self.log_signal.emit("Error saving processed Encoded dataset.")
 
             self.log_signal.emit("Balancing the data...")
             X_resampled, y_resampled = p53_data_balancing.balance_split_data(data)
