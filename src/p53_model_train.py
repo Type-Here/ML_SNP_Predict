@@ -1,6 +1,6 @@
 from PyQt5.QtCore import QThread, pyqtSignal
 
-from src.data_load import load_data
+from src.dataset_file_management import load_data
 from src.config import P53_MODEL_NAME
 
 import src.p53.p53_data_prep as p53_data_prep

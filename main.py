@@ -2,7 +2,7 @@ import os
 import tensorflow as tf
 import matplotlib.pyplot as plt
 
-from src.data_load import load_data
+from src.dataset_file_management import load_data
 from src.config import MODELS_DIR, P53_MODEL_NAME
 
 import src.p53.p53_data_prep as p53_data_prep
