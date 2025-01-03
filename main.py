@@ -11,7 +11,7 @@ import src.p53.p53_scaling as p53_scaling
 import src.p53.p53_data_balancing as p53_data_balancing
 import src.p53.p53_train_test_sets as p53_split
 import src.p53.p53_model as p53_model
-import model_evaluation as ev
+import src.model_evaluation as ev
 
 def main():
     # If a p53 model exists, load it
