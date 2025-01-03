@@ -157,6 +157,39 @@ class MainApp(QMainWindow):
         container.setLayout(main_layout)
         self.setCentralWidget(container)
 
+        # Create the menu
+        self.__create_menu()
+
+
+    # ---- GUI Functions ---- #
+
+    def __create_menu(self):
+        """
+            Create the menu bar.
+        """
+        # Menu Bar
+        menubar = self.menuBar()
+
+        # Menu File
+        file_menu = menubar.addMenu("File")
+        exit_action = QAction("Esci", self)
+        exit_action.triggered.connect(self.close)  #Close the application
+        file_menu.addAction(exit_action)
+
+        # Menu About
+        about_menu = menubar.addMenu("About")
+        info_action = QAction("Info", self)
+        info_action.triggered.connect(self.__show_info_dialog)  # Show dialog Info
+        about_menu.addAction(info_action)
+
+
+    def __show_info_dialog(self):
+        dialog = InfoDialog(self)
+        dialog.exec_()
+
+
+    # ---- Operative Functions ---- #
+
     def load_model(self):
 
         self.active_model = self.model_dropdown.currentText()
