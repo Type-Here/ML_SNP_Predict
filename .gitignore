@@ -276,3 +276,7 @@ fabric.properties
 
 # Dolphin
 .directory
+
+# Data And Model
+data/
+models/
