@@ -109,12 +109,36 @@ class MainApp(QMainWindow):
         self.setCentralWidget(container)
 
     def load_model(self):
-        # Placeholder 
-        self.position_input.setReadOnly(False)
-        self.mut_dropdown.setDisabled(False)    
-        self.prediction_output.clear()
+        # Load the model
+        self.model = self.__load_model()
+        if self.model is None:
+            self.log_output.append("Errore nel caricamento del modello.")
+            return
+        
         self.log_output.clear()
         self.log_output.append("Modello caricato: " + self.model_dropdown.currentText())
+        
+        # Load DNA sequence
+        self.sequence = self.__load_sequence()
+        if self.sequence is None:
+            self.log_output.append("Errore nel caricamento della sequenza.")
+            return
+        
+        self.log_output.append("Sequenza caricata.")
+        self.log_output.append("Inserisci la posizione, la mutazione e premi 'Predici'.")
+
+        self.position_input.setValidator(
+            self.__PositionValidator(min=1, max=len(self.sequence)))
+        
+        self.position_input.setPlaceholderText(f"Posizione (1-{len(self.sequence)})")
+        
+        # Enable the input fields
+        self.position_input.setReadOnly(False)
+        self.mut_dropdown.setDisabled(False)  
+        self.predict_button.setDisabled(False)  
+        self.prediction_output.clear()
+
+
 
     def predict(self):
         # Placeholder 
@@ -128,6 +152,20 @@ class MainApp(QMainWindow):
 
     def __PositionValidator(self, min=1, max=9999):
         return QIntValidator(min, max)
+    
+
+    def __load_model(self):
+        selected = self.model_dropdown.currentText()
+        self.model = load_model_by_name(selected)
+        return self.model
+    
+
+    def __load_sequence(self):
+        selected = self.model_dropdown.currentText()
+        self.sequence = get_fasta_sequence_by_model_name(selected) 
+        return self.sequence
+        
+        
         
 
 if __name__ == "__main__":
