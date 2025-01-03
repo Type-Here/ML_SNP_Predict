@@ -7,10 +7,23 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIntValidator
 import os
 
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+#from ..src import MODELS_DIR, DATA_PATH, MODELS_STATS_DIR, PFAM_PATH
+from src.fasta.fasta_seq import get_fasta_sequence_by_model_name
+from src.load_models import load_model_by_name
+from src.config import MODELS_DIR, DATA_PATH, PFAM_PATH, MODELS_STATS_DIR
+
 # Imposta dinamicamente il percorso QT_QPA_PLATFORM_PLUGIN_PATH
 os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = os.path.join(os.environ["CONDA_PREFIX"], "plugins", "platforms")
 os.environ["QT_QPA_PLATFORM"] = "xcb"  # Forza l'uso di xcb
 
+
+# Create Models, Pfam and Data Directories if they don't exist
+os.makedirs(MODELS_DIR, exist_ok=True)
+os.makedirs(MODELS_STATS_DIR, exist_ok=True)
+os.makedirs(DATA_PATH, exist_ok=True)
+os.makedirs(PFAM_PATH, exist_ok=True)
 
 class MainApp(QMainWindow):
     def __init__(self):
@@ -40,14 +53,14 @@ class MainApp(QMainWindow):
         predict_layout = QHBoxLayout()
         self.position_input = QLineEdit()
         self.position_input.setPlaceholderText("Posizione")
-        self.position_input.setMaximumWidth(80)
+        self.position_input.setMaximumWidth(150)
         self.position_input.setValidator(self.__PositionValidator())
         self.position_input.setReadOnly(True)
 
         self.ref_nucleotide = QLineEdit()
         self.ref_nucleotide.setReadOnly(True)
         self.ref_nucleotide.setPlaceholderText("Ref")
-        self.ref_nucleotide.setMaximumWidth(40)
+        self.ref_nucleotide.setMaximumWidth(50)
         self.ref_nucleotide.setReadOnly(True)
 
         self.mut_dropdown = QComboBox()
@@ -56,17 +69,17 @@ class MainApp(QMainWindow):
         self.mut_dropdown.setPlaceholderText("Mut")
         self.mut_dropdown.setDisabled(True)
 
-        predict_button = QPushButton("Predici")
-        predict_button.clicked.connect(self.predict)
-        predict_button.setMaximumWidth(80)
-        predict_button.setDisabled(True)
+        self.predict_button = QPushButton("Predici")
+        self.predict_button.clicked.connect(self.predict)
+        self.predict_button.setMaximumWidth(80)
+        self.predict_button.setDisabled(True)
 
         predict_layout.addWidget(QLabel("Posizione"))
         predict_layout.addWidget(self.position_input)
         predict_layout.addWidget(QLabel("Ref"))
         predict_layout.addWidget(self.ref_nucleotide)
         predict_layout.addWidget(self.mut_dropdown)
-        predict_layout.addWidget(predict_button)
+        predict_layout.addWidget(self.predict_button)
         left_layout.addLayout(predict_layout)
 
         # Section: Prediction Output
