@@ -7,6 +7,8 @@ from PyQt5.QtCore import Qt, QRegExp
 from PyQt5.QtGui import QIntValidator, QRegExpValidator, QIcon, QPixmap
 
 import os
+
+from src.p53_model_train import TrainingThread
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 #from ..src import MODELS_DIR, DATA_PATH, MODELS_STATS_DIR, PFAM_PATH
@@ -50,7 +52,7 @@ class MainApp(QMainWindow):
         email_layout.setAlignment(Qt.AlignLeft)
         email_label = QLabel("Email*:")
         self.email_input = QLineEdit()
-        email_label_explain = QLabel(" Richiesto da API EntreZ per il download della sequenza.")
+        email_label_explain = QLabel(" Richiesto da API EntreZ per il download della sequenza. Non necessaria registrazione.")
         email_label_explain.setStyleSheet("color: gray; font-size: 10px;")
         self.email_input.setPlaceholderText("Inserisci la tua email")
         self.email_input.setMaximumWidth(200)
@@ -70,12 +72,12 @@ class MainApp(QMainWindow):
         model_label = QLabel("Seleziona Modello:")
         self.model_dropdown = QComboBox()
         self.model_dropdown.addItems(["P53 Model", "P53 Pfam", "HRAS Transfer"]) 
-        load_model_button = QPushButton("Carica")
-        load_model_button.setMaximumWidth(80)
-        load_model_button.clicked.connect(self.load_model)
+        self.load_model_button = QPushButton("Carica")
+        self.load_model_button.setMaximumWidth(80)
+        self.load_model_button.clicked.connect(self.load_model)
         model_layout.addWidget(model_label)
         model_layout.addWidget(self.model_dropdown)
-        model_layout.addWidget(load_model_button)
+        model_layout.addWidget(self.load_model_button)
 
         left_layout.addLayout(model_layout)
 
@@ -189,6 +191,66 @@ class MainApp(QMainWindow):
         dialog = InfoDialog(self)
         dialog.exec_()
 
+    
+    def __disable_all_inputs(self):
+        """
+        Disable all input fields and buttons.
+        """
+        self.load_model_button.setDisabled(True)
+        self.position_input.setReadOnly(True)
+        self.mut_dropdown.setDisabled(True)
+        self.predict_button.setDisabled(True)
+
+
+    # --- Train Dialog Functions --- #
+
+    def __handle_missing_model(self, text_edit):
+        """
+        Handle the case where a saved model is not found.
+        Ask the user if they want to train the model and manage the training process.
+
+        Parameters:
+            text_edit (QTextEdit): The text field for displaying log messages.
+            training_thread (QThread): The thread responsible for training the model.
+        """
+        # Create a message box to ask the user
+        msg_box = QMessageBox()
+        msg_box.setIcon(QMessageBox.Question)
+        msg_box.setWindowTitle("Modello Non Trovato")
+        msg_box.setText("Nessun modello salvato per il tipo scelto. Vuoi addestrarne uno?")
+        msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        msg_box.setDefaultButton(QMessageBox.No)
+
+        # Show the dialog and get the user's response
+        response = msg_box.exec_()
+
+        if response == QMessageBox.Yes:
+
+            try:
+                # Create and start the training thread
+                self.training_thread = TrainingThread()
+            except Exception as e:
+                text_edit.append(f"Error creating the training thread: {e}")
+                return
+
+            # Disable the load button during training
+            self.__disable_all_inputs()
+
+            # Clear the text field
+            text_edit.clear()
+            
+            # Connect the training thread signals to update the text field
+            self.training_thread.log_signal.connect(text_edit.append)
+            
+            # Re-enable the button when the thread finishes
+            self.training_thread.finished.connect(lambda: self.load_model_button.setEnabled(True))
+            
+            # Start the training thread
+            self.training_thread.start()
+        else:
+            # Close the dialog if the user chooses "No"
+            msg_box.close()
+
 
     # ---- Operative Functions ---- #
 
@@ -205,7 +267,8 @@ class MainApp(QMainWindow):
         # Load the model
         self.model = self.__load_model()
         if self.model is None:
-            self.log_output.append("Errore nel caricamento del modello.")
+            self.log_output.append("Modello non trovato.")
+            self.__handle_missing_model(self.prediction_output)
             return
         
         self.log_output.clear()
