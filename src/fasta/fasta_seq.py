@@ -4,9 +4,66 @@
 
 import requests
 import os
-from src.config import FASTA_PATH
+from src.config import FASTA_PATH, P53_NM, HRAS_NM
 
-def download_fasta(nm_code, file_name, save_dir=FASTA_PATH):
+
+def get_fasta_sequence_by_model_name(name:str):
+    """
+    Get the FASTA sequence by the name of the model.
+    Try to load the sequence from a local file, if it doesn't exist download it from NCBI.
+    See get_fasta_sequence for more details.
+    """
+    nm_code = None
+    match name:
+        case "P53 Model":
+            nm_code = P53_NM
+        case "P53 Pfam":
+            nm_code = P53_NM
+        case "Hras Transfer":
+            nm_code = HRAS_NM
+        case _:
+            return None
+    
+    if nm_code:
+        return get_fasta_sequence(nm_code)
+    else:
+        return None
+
+
+
+def get_fasta_sequence(nm_code):
+    """
+    Get the FASTA sequence. \n
+    Try to load the sequence from a local file, if it doesn't exist download it from NCBI.
+
+    Parameters:
+        nm_code (str): NM - NG Code of the sequence (ex: 'NM_000546.6').
+
+    Returns:
+        str: The DNA sequence.
+    """
+    
+    if not nm_code:
+        return None
+    
+
+    file_name = nm_code.replace('.', '_')
+    file_path = os.path.join(FASTA_PATH, f"{file_name}.fasta")
+    
+    try:
+        # Try to read the file
+        sequence = _read_fasta(file_path)
+        if sequence:
+            return sequence
+    except FileNotFoundError:
+        # If the file does not exist, download it
+        file_path = _download_fasta(nm_code, file_name)
+        if file_path:
+            return _read_fasta(file_path)
+    
+    return None
+
+def _download_fasta(nm_code, file_name, save_dir=FASTA_PATH):
     """
     Download a FASTA sequence from NCBI and save it to a local file.
     
@@ -43,7 +100,7 @@ def download_fasta(nm_code, file_name, save_dir=FASTA_PATH):
         return None
 
 
-def read_fasta(file_path):
+def _read_fasta(file_path):
     """
     Read a FASTA file and return the sequence.
     
@@ -53,14 +110,10 @@ def read_fasta(file_path):
     Returns:
         str: The DNA sequence.
     """
-    try:
-        with open(file_path, 'r') as file:
-            # Skip the first line (header)
-            file.readline()
-            # Read the sequence
-            sequence = file.read().replace('\n', '')
-            return sequence
-    except OSError as e:
-        print(f"Errore durante la lettura del file: {e}")
-        return None    
+    with open(file_path, 'r') as file:
+        # Skip the first line (header)
+        file.readline()
+        # Read the sequence
+        sequence = file.read().replace('\n', '')
+        return sequence
     
