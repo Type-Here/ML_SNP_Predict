@@ -1,12 +1,12 @@
 import sys
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, 
-    QLabel, QPushButton, QComboBox, QLineEdit, QTextEdit
+    QLabel, QPushButton, QComboBox, QLineEdit, QTextEdit, QSpacerItem, QSizePolicy, QAction, QMessageBox
 )
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QIntValidator
-import os
+from PyQt5.QtCore import Qt, QRegExp
+from PyQt5.QtGui import QIntValidator, QRegExpValidator, QIcon, QPixmap
 
+import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 #from ..src import MODELS_DIR, DATA_PATH, MODELS_STATS_DIR, PFAM_PATH
@@ -18,6 +18,8 @@ from src.config import MODELS_DIR, DATA_PATH, PFAM_PATH, MODELS_STATS_DIR
 os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = os.path.join(os.environ["CONDA_PREFIX"], "plugins", "platforms")
 os.environ["QT_QPA_PLATFORM"] = "xcb"  # Forza l'uso di xcb
 
+from info import AUTHOR, VERSION
+from info_dialog import InfoDialog
 
 # Create Models, Pfam and Data Directories if they don't exist
 os.makedirs(MODELS_DIR, exist_ok=True)
@@ -28,8 +30,12 @@ os.makedirs(PFAM_PATH, exist_ok=True)
 class MainApp(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("ML Model Predictor")
+        self.setWindowTitle("GeneInsight")
         self.setGeometry(100, 100, 1200, 800)
+        self.setMinimumWidth(600)
+        self.setMinimumHeight(500)
+
+        self.setWindowIcon(QIcon("UI/assets/logo.png"))
 
         # Main Layout
         main_layout = QHBoxLayout()
@@ -37,20 +43,43 @@ class MainApp(QMainWindow):
         # Left Area (Predizione e Log)
         left_layout = QVBoxLayout()
 
+        # Section: Add Email Address
+        email_layout = QHBoxLayout()
+        email_layout.setAlignment(Qt.AlignLeft)
+        email_label = QLabel("Email*:")
+        email_input = QLineEdit()
+        email_label_explain = QLabel(" Richiesto da API EntreZ per il download della sequenza.")
+        email_label_explain.setStyleSheet("color: gray; font-size: 10px;")
+        email_input.setPlaceholderText("Inserisci la tua email")
+        email_input.setMaximumWidth(200)
+        email_input.setValidator(QRegExpValidator(
+                    QRegExp(r"[^@\s]+@[^@\s]+\.[a-zA-Z]{2,}$"))
+        )
+
+        email_layout.addWidget(email_label)
+        email_layout.addWidget(email_input)
+        email_layout.addWidget(email_label_explain)
+        email_layout.addSpacerItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
+
+        left_layout.addLayout(email_layout)
+
         # Section: Load Model
         model_layout = QHBoxLayout()
         model_label = QLabel("Seleziona Modello:")
         self.model_dropdown = QComboBox()
         self.model_dropdown.addItems(["P53 Model", "P53 Pfam", "HRAS Transfer"]) 
         load_model_button = QPushButton("Carica")
+        load_model_button.setMaximumWidth(80)
         load_model_button.clicked.connect(self.load_model)
         model_layout.addWidget(model_label)
         model_layout.addWidget(self.model_dropdown)
         model_layout.addWidget(load_model_button)
+
         left_layout.addLayout(model_layout)
 
         # Section: Prediction
         predict_layout = QHBoxLayout()
+        predict_layout.setAlignment(Qt.AlignLeft)
         self.position_input = QLineEdit()
         self.position_input.setPlaceholderText("Posizione")
         self.position_input.setMaximumWidth(150)
@@ -73,34 +102,54 @@ class MainApp(QMainWindow):
         self.predict_button.clicked.connect(self.predict)
         self.predict_button.setMaximumWidth(80)
         self.predict_button.setDisabled(True)
+        
+        pos_label = QLabel("Posizione")
+        pos_label.setStyleSheet("width: min-content; text-align: right;")
+        pos_label.setMaximumWidth(60)
+        ref_label = QLabel("Ref")
+        ref_label.setMaximumWidth(30)
+        mut_label = QLabel("Mut")
+        mut_label.setMaximumWidth(30)
 
-        predict_layout.addWidget(QLabel("Posizione"))
+
+        predict_layout.addWidget(pos_label)
         predict_layout.addWidget(self.position_input)
-        predict_layout.addWidget(QLabel("Ref"))
+        predict_layout.addSpacerItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        predict_layout.addWidget(ref_label)
         predict_layout.addWidget(self.ref_nucleotide)
+        predict_layout.addWidget(mut_label)
         predict_layout.addWidget(self.mut_dropdown)
+        predict_layout.addSpacerItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
         predict_layout.addWidget(self.predict_button)
+        predict_layout.addSpacerItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
+
         left_layout.addLayout(predict_layout)
+
+         # Listener for position input to update the ref nucleotide on change
+        self.position_input.textChanged.connect(self.__update_ref_nucleotide)
 
         # Section: Prediction Output
         self.prediction_output = QTextEdit()
         self.prediction_output.setReadOnly(True)
         self.prediction_output.setPlaceholderText("Dati di Predizione e Score")
+
         left_layout.addWidget(self.prediction_output)
 
         # Section: Log
         self.log_output = QTextEdit()
         self.log_output.setReadOnly(True)
         self.log_output.setPlaceholderText("Log")
+
         left_layout.addWidget(self.log_output)
 
         main_layout.addLayout(left_layout, 2)  # 2/3 width
 
-        # Righe Area (Biopython 3D)
+        # Right Area (Biopython 3D)
         right_layout = QVBoxLayout()
         self.biopython_view = QLabel("Biopython Proteina 3D")
         self.biopython_view.setAlignment(Qt.AlignCenter)
         right_layout.addWidget(self.biopython_view)
+        
         main_layout.addLayout(right_layout, 1)  # 1/3 width
 
         # Set the central widget
