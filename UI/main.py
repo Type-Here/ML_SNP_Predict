@@ -225,6 +225,9 @@ class MainApp(QMainWindow):
         
         self.position_input.setPlaceholderText(f"Posizione (1-{len(self.sequence)})")
         
+        # Load Model Stats
+        self.__load_stats()
+        
         # Enable the input fields
         self.position_input.setReadOnly(False)
         self.mut_dropdown.setDisabled(False)  
@@ -270,6 +273,29 @@ class MainApp(QMainWindow):
             return None
         self.sequence = get_fasta_sequence_by_model_name(self.active_model, self.email) 
         return self.sequence
+    
+
+    def __load_stats(self):
+        if not self.active_model:
+            return None
+        # Load the stats
+
+        model = get_model_name_from_common_name(self.active_model)
+
+        # Display the stats in the text edit
+        display_stats_in_textedit(
+            stats_file=os.path.join(MODELS_STATS_DIR, f"{model}.json"),
+            text_edit=self.prediction_output
+        )
+
+        # Display the plots in the layout
+        display_plots_in_layout(
+            stats_file=os.path.join(MODELS_STATS_DIR, f"{model}.json"),
+            layout= self.biopython_view, # TODO: Change to the correct layout
+            text_edit=self.prediction_output
+        )
+
+
         
 
     def __get_prediction(self, position, ref, mutation):
