@@ -47,17 +47,17 @@ class MainApp(QMainWindow):
         email_layout = QHBoxLayout()
         email_layout.setAlignment(Qt.AlignLeft)
         email_label = QLabel("Email*:")
-        email_input = QLineEdit()
+        self.email_input = QLineEdit()
         email_label_explain = QLabel(" Richiesto da API EntreZ per il download della sequenza.")
         email_label_explain.setStyleSheet("color: gray; font-size: 10px;")
-        email_input.setPlaceholderText("Inserisci la tua email")
-        email_input.setMaximumWidth(200)
-        email_input.setValidator(QRegExpValidator(
+        self.email_input.setPlaceholderText("Inserisci la tua email")
+        self.email_input.setMaximumWidth(200)
+        self.email_input.setValidator(QRegExpValidator(
                     QRegExp(r"[^@\s]+@[^@\s]+\.[a-zA-Z]{2,}$"))
         )
 
         email_layout.addWidget(email_label)
-        email_layout.addWidget(email_input)
+        email_layout.addWidget(self.email_input)
         email_layout.addWidget(email_label_explain)
         email_layout.addSpacerItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
 
@@ -191,8 +191,14 @@ class MainApp(QMainWindow):
     # ---- Operative Functions ---- #
 
     def load_model(self):
-
+        # Get User Input
         self.active_model = self.model_dropdown.currentText()
+        self.email = self.email_input.text()
+
+        # Check if email is valid
+        if not self.email_input.hasAcceptableInput():
+            QMessageBox.warning(self, "Email non valida", "Per favore, inserisci un'email valida.")
+            return
         
         # Load the model
         self.model = self.__load_model()
@@ -260,7 +266,7 @@ class MainApp(QMainWindow):
     def __load_sequence(self):
         if not self.active_model:
             return None
-        self.sequence = get_fasta_sequence_by_model_name(self.active_model) 
+        self.sequence = get_fasta_sequence_by_model_name(self.active_model, self.email) 
         return self.sequence
         
 
