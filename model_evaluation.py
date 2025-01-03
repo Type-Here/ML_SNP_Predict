@@ -204,7 +204,7 @@ def save_extended_stats(model, X_test, y_test, model_name, history: keras.callba
     loss_data = history.history.get('loss', [])
     val_loss_data = history.history.get('val_loss', [])
 
-    # Dati per la curva ROC/AUC
+    # Data for ROC/AUC
     fpr = {}
     tpr = {}
     roc_auc = {}
@@ -212,7 +212,7 @@ def save_extended_stats(model, X_test, y_test, model_name, history: keras.callba
         fpr[i], tpr[i], _ = roc_curve(y_test_classes == i, y_pred_probs[:, i])
         roc_auc[i] = roc_auc_score(y_test_classes == i, y_pred_probs[:, i])
 
-    # Struttura dati da salvare
+    # Data structure to save
     stats = {
         "accuracy": accuracy,
         "precision_per_class": precision.tolist(),
@@ -225,9 +225,43 @@ def save_extended_stats(model, X_test, y_test, model_name, history: keras.callba
         "fpr_tpr": {str(k): {"fpr": fpr[k].tolist(), "tpr": tpr[k].tolist()} for k in fpr}
     }
 
-    # Salvataggio in un file JSON
+    # Save in JSON format
     save_path = f"{MODELS_STATS_DIR}/{model_name}_stats.json"
     with open(save_path, 'w') as f:
         json.dump(stats, f, indent=4)
 
     print(f"Statistiche estese salvate in: {save_path}")
+
+
+
+# -------------------- Load statistics -------------------- #
+
+import json
+
+def load_stats(model_name):
+    """
+    Reads the statistics data from a JSON file and returns it as a dictionary.
+
+    Parameters:
+        model_name (str): Name of the model to identify the stats file.
+
+    Returns:
+        dict: Data loaded from the JSON file.
+    """
+    # Construct the file path for the stats JSON
+    file_path = f"{MODELS_STATS_DIR}/{model_name}_stats.json"
+    
+    try:
+        # Open and read the JSON file
+        with open(file_path, 'r') as f:
+            stats = json.load(f)
+        print(f"Data loaded from: {file_path}")
+        return stats
+    except FileNotFoundError:
+        # Handle the case where the file does not exist
+        print(f"Error: The file {file_path} does not exist.")
+        return None
+    except json.JSONDecodeError as e:
+        # Handle the case where the JSON is invalid
+        print(f"Error decoding the JSON file: {e}")
+        return None
