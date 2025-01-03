@@ -9,7 +9,7 @@ import tensorflow as tf
 #from tensorflow.python.keras.layers import Dense, Dropout
 from keras.api.models import Sequential
 from keras.api.layers import Dense, Dropout, Input
-from src import P53_MODEL_DIR, P53_MODEL_NAME
+from src import MODELS_DIR, P53_MODEL_NAME
 
 def p53_train_model(X_train, y_train, X_test, y_test) -> tuple[tf.keras.Model, tf.keras.callbacks.History]:
     """
@@ -81,12 +81,12 @@ def save_model(model: tf.keras.Model, name: str = P53_MODEL_NAME):
             name: The name of the model
     """
 
-    model_path = f"{P53_MODEL_DIR}/{name}.h5"
-    keras_path = f"{P53_MODEL_DIR}/{name}.keras"
+    model_path = f"{MODELS_DIR}/{name}.h5"
+    keras_path = f"{MODELS_DIR}/{name}.keras"
 
     try:
-        if os.path.exists(P53_MODEL_DIR) is False:
-            os.makedirs(P53_MODEL_DIR)
+        if os.path.exists(MODELS_DIR) is False:
+            os.makedirs(MODELS_DIR)
 
         elif os.path.exists(model_path):
             back_path = model_path + ".bak"
@@ -106,7 +106,7 @@ def save_model(model: tf.keras.Model, name: str = P53_MODEL_NAME):
     except Exception as e:
         print(f"Error saving model: {e}")
         print("Trying to save the model with alternative name: `alt.h5`...")
-        model.save(f"{P53_MODEL_DIR}/alt.h5")
+        model.save(f"{MODELS_DIR}/alt.h5")
         return
     
 

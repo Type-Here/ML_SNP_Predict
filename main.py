@@ -3,7 +3,7 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 
 from src.data_load import load_data
-from src.config import P53_MODEL_DIR, P53_MODEL_NAME
+from src.config import MODELS_DIR, P53_MODEL_NAME
 
 import src.p53.p53_data_prep as p53_data_prep
 import src.p53.p53_encoding as p53_encoding
@@ -15,10 +15,10 @@ import model_evaluation as ev
 
 def main():
     # If a p53 model exists, load it
-    if os.path.exists(f"{P53_MODEL_DIR}/{P53_MODEL_NAME}.keras"):
+    if os.path.exists(f"{MODELS_DIR}/{P53_MODEL_NAME}.keras"):
         print(" -- Model found --\n")
         print("Loading model...")
-        model = tf.keras.models.load_model(f"{P53_MODEL_DIR}/{P53_MODEL_NAME}.keras")
+        model = tf.keras.models.load_model(f"{MODELS_DIR}/{P53_MODEL_NAME}.keras")
         model.trainable = False
         model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
