@@ -11,7 +11,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 #from ..src import MODELS_DIR, DATA_PATH, MODELS_STATS_DIR, PFAM_PATH
 from src.fasta.fasta_seq import get_fasta_sequence_by_model_name
-from src.load_models import load_model_by_name
+from src.models_usage import load_model_by_name, get_prediction
 from src.config import MODELS_DIR, DATA_PATH, PFAM_PATH, MODELS_STATS_DIR
 
 # Imposta dinamicamente il percorso QT_QPA_PLATFORM_PLUGIN_PATH
@@ -109,6 +109,9 @@ class MainApp(QMainWindow):
         self.setCentralWidget(container)
 
     def load_model(self):
+
+        self.active_model = self.model_dropdown.currentText()
+        
         # Load the model
         self.model = self.__load_model()
         if self.model is None:
@@ -116,7 +119,7 @@ class MainApp(QMainWindow):
             return
         
         self.log_output.clear()
-        self.log_output.append("Modello caricato: " + self.model_dropdown.currentText())
+        self.log_output.append("Modello caricato: " + self.active_model)
         
         # Load DNA sequence
         self.sequence = self.__load_sequence()
@@ -139,7 +142,6 @@ class MainApp(QMainWindow):
         self.prediction_output.clear()
 
 
-
     def predict(self):
         # Placeholder 
         position = self.position_input.text()
@@ -155,16 +157,31 @@ class MainApp(QMainWindow):
     
 
     def __load_model(self):
-        selected = self.model_dropdown.currentText()
-        self.model = load_model_by_name(selected)
+        if not self.active_model:
+            return None
+        self.model = load_model_by_name(self.active_model)
         return self.model
     
 
     def __load_sequence(self):
-        selected = self.model_dropdown.currentText()
-        self.sequence = get_fasta_sequence_by_model_name(selected) 
+        if not self.active_model:
+            return None
+        self.sequence = get_fasta_sequence_by_model_name(self.active_model) 
         return self.sequence
         
+
+    def __get_prediction(self, position, ref, mutation):
+        if not self.model:
+            return None
+        prediction = get_prediction(
+            model_name=self.active_model, 
+            model=self.model, 
+            position=position, 
+            ref=ref, 
+            mut=mutation, 
+            sequence=self.sequence
+        )
+        return prediction
         
         
 
