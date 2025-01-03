@@ -6,9 +6,29 @@ import requests
 import json
 from src.config import PFAM_PATH
 
+# ------------------ Functions to get Pfam data ------------------ #
+
+def get_pfam_data(protein_accession):
+    """
+        Get the Pfam data for a protein.
+        Try to load the data from a JSON file, if it doesn't exist download it from the EBI InterPro API.
+        Parameters:
+            protein_accession (str): The UniProt accession number of the protein.
+        Returns:
+            dict: The Pfam data. If the data doesn't exist, return None.
+    """
+    try:
+        pfam_data = _load_pfam_json(f"{protein_accession}.json")
+        return pfam_data
+    except FileNotFoundError:
+        pfam_data = _download_pfam_domains(protein_accession)
+        if pfam_data:
+            _save_pfam_json(pfam_data, file_name = f"{protein_accession}.json")
+            return pfam_data
+    return None
 
 # Function to download Pfam data of a protein
-def download_pfam_domains(protein_accession):
+def _download_pfam_domains(protein_accession):
     """
         Download the Pfam domains for a protein from the EBI InterPro API.
         Parameters:
@@ -25,7 +45,7 @@ def download_pfam_domains(protein_accession):
         return None
     
 
-def save_pfam_json(pfam_data, dir_path = PFAM_PATH, file_name = "pfam_data.json"):
+def _save_pfam_json(pfam_data, dir_path = PFAM_PATH, file_name = "pfam_data.json"):
     """
         Save the Pfam data to a JSON file.
         Parameters:
@@ -39,7 +59,7 @@ def save_pfam_json(pfam_data, dir_path = PFAM_PATH, file_name = "pfam_data.json"
     print(f"File salvato in: {file_path}")
 
 
-def load_pfam_json(file_path = PFAM_PATH, file_name = "pfam_data.json"):
+def _load_pfam_json(file_name, file_path = PFAM_PATH):
     """
         Load the Pfam data from a JSON file.
         Parameters:
@@ -52,6 +72,10 @@ def load_pfam_json(file_path = PFAM_PATH, file_name = "pfam_data.json"):
     with open(file_path, 'r') as file:
         return json.load(file)
 
+# ------------------ End of functions to get Pfam data ------------------ #
+
+
+# ------------------ Functions to parse Pfam data ------------------ #
 
 # Function to create list of dicts of Pfam domains
 def create_domain_dict(pfam_data):
