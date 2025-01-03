@@ -4,12 +4,16 @@
 """
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score, precision_score, recall_score, f1_score
 from sklearn.metrics import roc_curve, roc_auc_score
+from sklearn.metrics import precision_recall_fscore_support
 from sklearn.model_selection import KFold
+import numpy as np
 import matplotlib.pyplot as plt
 import tensorflow as tf
+import keras
+import json
 
+from src.config import MODELS_STATS_DIR
 
-import numpy as np
 
 def simple_evaluate_model(model, X_test, y_test):
     """
@@ -160,3 +164,70 @@ def _get_classes(model, X_test, y_test):
         y_test_classes = y_test
     
     return y_pred, y_pred_probs, y_test_classes
+
+
+# -------------------- Save statistics -------------------- #
+
+
+def save_extended_stats(model, X_test, y_test, model_name, history: keras.callbacks.History):
+    """
+    Save the extended evaluation statistics of the model, including accuracy, recall, specificity,
+    precision, F1-score, loss, and data for AUC and loss plots.
+
+    Parameters:
+        model (tf.keras.Model): Keras model to evaluate.
+        X_test (np.ndarray): Test dataset.
+        y_test (np.ndarray): Test labels.
+        model_name (str): Name of the model.
+        history (tf.keras.callbacks.History): History object from model training.
+    """
+    # Calculate predicted classes and probabilities
+    y_pred, y_pred_probs, y_test_classes = _get_classes(model, X_test, y_test)
+
+    # Accuracy
+    accuracy = accuracy_score(y_test_classes, y_pred)
+
+    # Precision, Recall, F1-Score for each class
+    precision, recall, f1, _ = precision_recall_fscore_support(y_test_classes, y_pred, average=None)
+
+    # Confusion Matrix
+    conf_matrix = confusion_matrix(y_test_classes, y_pred)
+
+    # Specificity (1 - False Positive Rate)
+    specificity = []
+    for i in range(len(conf_matrix)):
+        tn = conf_matrix.sum() - (conf_matrix[i, :].sum() + conf_matrix[:, i].sum() - conf_matrix[i, i])
+        fp = conf_matrix[:, i].sum() - conf_matrix[i, i]
+        specificity.append(tn / (tn + fp))
+
+    # Loss data
+    loss_data = history.history.get('loss', [])
+    val_loss_data = history.history.get('val_loss', [])
+
+    # Dati per la curva ROC/AUC
+    fpr = {}
+    tpr = {}
+    roc_auc = {}
+    for i in range(len(np.unique(y_test_classes))):
+        fpr[i], tpr[i], _ = roc_curve(y_test_classes == i, y_pred_probs[:, i])
+        roc_auc[i] = roc_auc_score(y_test_classes == i, y_pred_probs[:, i])
+
+    # Struttura dati da salvare
+    stats = {
+        "accuracy": accuracy,
+        "precision_per_class": precision.tolist(),
+        "recall_per_class": recall.tolist(),
+        "f1_per_class": f1.tolist(),
+        "specificity_per_class": specificity,
+        "loss_data": loss_data,
+        "val_loss_data": val_loss_data,
+        "roc_auc": {str(k): v for k, v in roc_auc.items()},
+        "fpr_tpr": {str(k): {"fpr": fpr[k].tolist(), "tpr": tpr[k].tolist()} for k in fpr}
+    }
+
+    # Salvataggio in un file JSON
+    save_path = f"{MODELS_STATS_DIR}/{model_name}_stats.json"
+    with open(save_path, 'w') as f:
+        json.dump(stats, f, indent=4)
+
+    print(f"Statistiche estese salvate in: {save_path}")
