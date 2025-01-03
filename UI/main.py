@@ -201,6 +201,18 @@ class MainApp(QMainWindow):
         self.log_output.append("Predizione effettuata con successo.")
 
 
+    def __update_ref_nucleotide(self):
+        position = self.position_input.text()
+        if position.isdigit():
+            pos = int(position) - 1  # 0-based index
+            if 0 <= pos < len(self.sequence):
+                self.ref_nucleotide.setText(self.sequence[pos])
+            else:
+                self.ref_nucleotide.setText("")  # Out of range
+        else:
+            self.ref_nucleotide.setText("")  # Not a number
+
+
     def __PositionValidator(self, min=1, max=9999):
         return QIntValidator(min, max)
     
