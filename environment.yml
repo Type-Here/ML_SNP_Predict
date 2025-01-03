@@ -12,3 +12,4 @@ dependencies:
       - pyqt5
       - scikit-learn
       - imbalanced-learn
+      - biopython==1.84
