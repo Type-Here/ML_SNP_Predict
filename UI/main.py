@@ -520,12 +520,23 @@ class MainApp(QMainWindow):
         self.log_output.append("Statistiche caricate.")
         self.prediction_output.append("-- Fine Statistiche --")
 
+        stat_layout=self.findChild(QFrame, "stats_frame").layout()
+        self.__clear_layout(stat_layout)
+
         # Display the plots in the layout
         display_plots_in_layout(
             stats_file=stats_file,
-            layout= self.right_layout, # TODO: Change to the correct layout
+            layout=stat_layout,
             text_edit=self.prediction_output
         )
+
+        # Close Biopython 3D section and open Model Stats section
+        bio_but = self.findChild(QToolButton, "biopython_3d_button")
+        if bio_but.isChecked():
+            bio_but.click()
+        sbut = self.findChild(QToolButton, "model_stats_button")
+        if not sbut.isChecked():
+            sbut.click()
 
 
         
