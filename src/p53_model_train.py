@@ -23,7 +23,11 @@ class TrainingThread(QThread):
             self.log_signal.emit("Starting the training process...\n")
 
             data = load_data(protein = 'p53') # Loads saved data or downloads it if not present
-            self.log_signal.emit(data.head(3))
+            if data is None:
+                self.log_signal.emit("Error loading data.")
+                return
+            self.log_signal.emit("Dataset loaded.")
+            self.log_signal.emit('Data: ' + data.shape[0] +' x ' + data.shape[1] + "\n")
 
             # Preprocess the data
             self.log_signal.emit("Preprocessing the data...")
