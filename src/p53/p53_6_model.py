@@ -11,6 +11,7 @@ import pandas as pd
 from keras.api.models import Sequential
 from keras.api.layers import Dense, Dropout, Input
 from src import MODELS_DIR, P53_MODEL_NAME
+from models_usage import save_model as general_save_model
 
 def p53_train_model(X_train, y_train, X_test, y_test) -> tuple[tf.keras.Model, tf.keras.callbacks.History]:
     """
@@ -72,6 +73,7 @@ def p53_train_model(X_train, y_train, X_test, y_test) -> tuple[tf.keras.Model, t
 
 def save_model(model: tf.keras.Model, name: str = P53_MODEL_NAME):
     """
+        Use the general save_model function to save the model in models_usage.py module.
         Save the model to a file. 
         If a model with the same name exists, it will be renamed with a .bak extension.
         Files are saved in the models directory.
@@ -80,37 +82,10 @@ def save_model(model: tf.keras.Model, name: str = P53_MODEL_NAME):
         Parameters:
             model: The model to save.
             name: The name of the model
+        Returns:
+            str: The path where the model was saved. (keras format) or None if an error occurred.
     """
-
-    model_path = f"{MODELS_DIR}/{name}.h5"
-    keras_path = f"{MODELS_DIR}/{name}.keras"
-
-    try:
-        if os.path.exists(MODELS_DIR) is False:
-            os.makedirs(MODELS_DIR)
-
-        elif os.path.exists(model_path):
-            back_path = model_path + ".bak"
-            if os.path.exists(back_path):
-                os.remove(back_path)
-            os.rename(src=model_path, dst= model_path + ".bak")
-
-        if os.path.exists(keras_path):
-            back_path = keras_path + ".bak"
-            if os.path.exists(back_path):
-                os.remove(back_path)
-            os.rename(src=keras_path, dst=keras_path + ".bak")      
-
-        model.save(model_path)
-        model.save(keras_path)
-
-    except Exception as e:
-        print(f"Error saving model: {e}")
-        print("Trying to save the model with alternative name: `alt.h5`...")
-        model.save(f"{MODELS_DIR}/alt.h5")
-        return
-    
-
+    return general_save_model(model, name)
 
 
 def retrain_model_to_save(model, X_train, y_train) -> tuple[tf.keras.Model, tf.keras.callbacks.History]:

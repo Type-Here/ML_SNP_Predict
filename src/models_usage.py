@@ -6,6 +6,7 @@ import tensorflow as tf
 import os
 from src import MODELS_DIR, P53_MODEL_NAME, P53_PFAM_MODEL_NAME, HRAS_MODEL_NAME
 
+## --------------------------- LOAD MODELS --------------------------- ##
 
 def load_model_by_name(name: str) -> tf.keras.Model:
     """
@@ -36,6 +37,55 @@ def load_model_by_name(name: str) -> tf.keras.Model:
         return None
     
 
+## --------------------------- SAVE MODELS --------------------------- ##
+
+def save_model(model: tf.keras.Model, name: str):
+    """
+        Save the model to a file. 
+        If a model with the same name exists, it will be renamed with a .bak extension.
+        Files are saved in the models directory.
+        Models are saved in both .h5 and .keras formats.
+
+        Parameters:
+            model: The model to save.
+            name: The name of the model
+        Returns:
+            str: The path where the model was saved. (keras format) or None if an error occurred.
+    """
+
+    model_path = f"{MODELS_DIR}/{name}.h5"
+    keras_path = f"{MODELS_DIR}/{name}.keras"
+
+    try:
+        if os.path.exists(MODELS_DIR) is False:
+            os.makedirs(MODELS_DIR)
+
+        elif os.path.exists(model_path):
+            back_path = model_path + ".bak"
+            if os.path.exists(back_path):
+                os.remove(back_path)
+            os.rename(src=model_path, dst= model_path + ".bak")
+
+        if os.path.exists(keras_path):
+            back_path = keras_path + ".bak"
+            if os.path.exists(back_path):
+                os.remove(back_path)
+            os.rename(src=keras_path, dst=keras_path + ".bak")      
+
+        model.save(model_path)
+        model.save(keras_path)
+        return keras_path
+    
+    except Exception as e:
+        print(f"Error saving model: {e}")
+        print("Trying to save the model with alternative name: `alt.h5`...")
+        model.save(f"{MODELS_DIR}/alt_{name}.h5")
+        return None
+    
+
+
+
+## --------------------------- PREDICTIONS --------------------------- ##
 
 def get_prediction(model_name, model, position, ref, mut, sequence):
     """
