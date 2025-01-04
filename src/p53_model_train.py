@@ -3,12 +3,12 @@ from PyQt5.QtCore import QThread, pyqtSignal
 from src.dataset_file_management import load_data, save_processed_data
 from src.config import P53_MODEL_NAME
 
-import src.p53.p53_data_prep as p53_data_prep
-import src.p53.p53_encoding as p53_encoding
-import src.p53.p53_scaling as p53_scaling
-import src.p53.p53_data_balancing as p53_data_balancing
-import src.p53.p53_train_test_sets as p53_split
-import src.p53.p53_model as p53_model
+import src.p53.p53_1_data_prep as p53_1_data_prep
+import src.p53.p53_2_encoding as p53_2_encoding
+import src.p53.p53_3_scaling as p53_3_scaling
+import src.p53.p53_4_data_balancing as p53_4_data_balancing
+import src.p53.p53_5_data_split_train as p53_split
+import src.p53.p53_6_model as p53_6_model
 import src.model_evaluation as ev
 
 class TrainingThread(QThread):
@@ -33,7 +33,7 @@ class TrainingThread(QThread):
             self.log_signal.emit("Preprocessing the data...")
             
             self.log_signal.emit("Cleaning the data...")
-            data = p53_data_prep.p53_cleaning(data)
+            data = p53_1_data_prep.p53_cleaning(data)
 
             data_save_path = save_processed_data(data, P53_MODEL_NAME) # Save the processed data Not Encoded and Scaled
             if data_save_path:
@@ -42,10 +42,10 @@ class TrainingThread(QThread):
                 self.log_signal.emit("Error saving processed non encoded dataset.")
             
             self.log_signal.emit("Encoding the data...")
-            data = p53_encoding.p53_encoding(data)
+            data = p53_2_encoding.p53_encoding(data)
             
             self.log_signal.emit("Scaling the data...")
-            data = p53_scaling.p53_scaling(data)
+            data = p53_3_scaling.p53_scaling(data)
 
             data_save_path = save_processed_data(data, P53_MODEL_NAME, is_encoded=True, ) # Save the processed data Encoded and Scaled but not Balanced
             if data_save_path:
@@ -54,7 +54,7 @@ class TrainingThread(QThread):
                 self.log_signal.emit("Error saving processed Encoded dataset.")
 
             self.log_signal.emit("Balancing the data...")
-            X_resampled, y_resampled = p53_data_balancing.balance_split_data(data)
+            X_resampled, y_resampled = p53_4_data_balancing.balance_split_data(data)
 
             self.log_signal.emit("Creating the training and test sets...")
             X_train, X_test, y_train, y_test \
@@ -62,7 +62,7 @@ class TrainingThread(QThread):
             
             # Train the model
             self.log_signal.emit("Training the model...")
-            model, history = p53_model.p53_train_model(X_train, y_train, X_test, y_test)
+            model, history = p53_6_model.p53_train_model(X_train, y_train, X_test, y_test)
 
             # Evaluate the model
             self.log_signal.emit("Evaluating the model...")
@@ -90,12 +90,12 @@ class TrainingThread(QThread):
             # Train the model to save it
             self.log_signal.emit("Training the model with all the data to save it...")
 
-            model, history = p53_model.retrain_model_to_save(model, X_resampled, y_resampled)
+            model, history = p53_6_model.retrain_model_to_save(model, X_resampled, y_resampled)
 
             # Save the model
             self.log_signal.emit("\nSaving the model...")
 
-            p53_model.save_model(model)
+            p53_6_model.save_model(model)
 
             self.log_signal.emit("Model saved.")
 
