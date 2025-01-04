@@ -1,6 +1,6 @@
 """
     This module contains the functions for data processing of the HRAS dataset.
-    1. This schould be the first module to be executed for Hras.
+    1. This should be the first module to be executed for Hras.
 """
 
 import pandas as pd

@@ -1,6 +1,6 @@
 """
     This module contains the functions to encode the HRAS protein sequence into a numerical format (Encoding).
-    2. This schould be the second module to be executed for Hras.
+    2. This should be the second module to be executed for Hras.
 """
 from sklearn.preprocessing import OneHotEncoder
 import pandas as pd

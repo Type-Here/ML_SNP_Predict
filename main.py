@@ -62,7 +62,7 @@ def main():
         print("\nCross-validation evaluation:")
         ev.n_times_k_fold_eval(model, X_resampled, y_resampled, n_splits=10, n_repeats=1)
 
-        model, history = p53_model.train_model_to_save(model, X_resampled, y_resampled)
+        model, history = p53_model.retrain_model_to_save(model, X_resampled, y_resampled)
 
         print("Saving the model...")
         p53_model.save_model(model)
