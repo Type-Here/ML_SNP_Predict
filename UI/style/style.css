@@ -1,0 +1,170 @@
+/* IMPORTANT: a QFrame is almost always automatically created to incapsulate other widgets,
+ * so it's better use an ID to style it, instead of using QFrame directly */
+
+/* Main QMainWindow */
+QMainWindow {
+    background-color: #2a2e32;
+    color: white;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+}
+
+QMenuBar, QMenuBar::item,  QMenu{
+    background-color: #2a2e32;
+    color: white;
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+}
+
+QAction, QMenu::item {
+    color: white;
+    background-color: #1a1a1a;
+}
+
+QWidget {
+    background-color: #2a2e32;;
+    color: inherit;
+    font-family: inherit;
+    font-size: inherit;
+}
+
+#main_container{
+    border: none;
+    border-top: 1px solid #4d4d4d;
+}
+
+#main_layout {
+    background-color: #2a2e32;
+    color: white;
+    border: none;
+}
+
+#left_container, #right_container {
+    background-color: #2a2e32;
+    color: white;
+}
+
+QLabel {
+    color: #b0b0b0;
+    font-size: 12px;
+    border-color: #ff0000;
+}
+
+
+/* QLineEdit */
+QLineEdit {
+    background-color: #1b1e20;
+    border: 1px solid #4d4d4d;
+    color: white;
+    padding: 5px;
+    font-size: 12px;
+    border-radius: 4px;
+}
+
+/* QComboBox (Dropdown menu) */
+QComboBox {
+    background-color: #1b1e20;
+    border: 1px solid #4d4d4d;
+    color: white;
+    padding: 5px;
+    font-size: 12px;
+    border-radius: 4px;
+}
+QComboBox::drop-down {
+    border: none;
+    background-color: #505050;
+    width: 5px;
+}
+
+QComboBox:hover, QComboBox::hover, QComboBox::down-arrow:hover {
+    opacity: 0.8;
+}
+
+QComboBox:disabled{
+    background-color: #1b1e20;
+    border: 1px solid #4d4d4d;
+    color: #4d4d4d;
+}
+
+/*QComboBox::down-arrow {
+    image: url(down-arrow.png);
+}*/
+
+
+/* QPushButton - General Buttons */
+QPushButton {
+    background-color: #3a3a3a;
+    border: 1px solid #4d4d4d;
+    color: white;
+    padding: 5px;
+    font-size: 12px;
+    border-radius: 4px;
+}
+QPushButton:hover {
+    background-color: #505050;
+}
+
+QPushButton:pressed {
+    background-color: #6d6d6d;
+}
+
+QPushButton[disabled="true"], QPushButton:disabled {
+    background-color: #2a2a2a;
+    border: 1px solid #4d4d4d;
+    color: #4d4d4d;
+}
+
+
+/* QTextEdit - (TextAreas for data and log) */
+QTextEdit {
+    background-color: #1b1e20;
+    border: 1px solid #4d4d4d;
+    color: white;
+    padding: 5px;
+    font-size: 12px;
+    border-radius: 4px;
+}
+
+QTextEdit[readonly="true"] {
+    background-color: #1b1e20;
+    border: 1px solid #4d4d4d;
+    color: white;
+    padding: 5px;
+    font-size: 12px;
+    border-radius: 4px;
+}
+
+/* QSpacerItem */ /* To Check */
+QSpacerItem {
+    margin: 0;
+    padding: 0;
+}
+
+
+/* Accordion Buttoon */
+
+QToolButton {
+    min-width: 0px;  /* no limits */
+    text-align: center;
+    background-color: #3a3a3a; 
+    border: 1px solid #4d4d4d;
+    padding: 3px auto;
+    font-size: 12px;
+    color: white;
+}
+QToolButton:hover {
+    background-color: #505050;  
+    }
+QToolButton:checked {
+    background-color: #6d6d6d;  
+}                                                             
+
+
+
+/* Accordion Frame */
+#biopython_fram {
+    background-color: #2a2e32;
+    border-radius: 8px;
+    border: 1px solid #4d4d4d;
+    padding: 1px;
+}
