@@ -1,7 +1,8 @@
 import sys
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, 
-    QLabel, QPushButton, QComboBox, QLineEdit, QTextEdit, QSpacerItem, QSizePolicy, QAction, QMessageBox
+    QLabel, QPushButton, QComboBox, QLineEdit, QTextEdit, QSpacerItem, QSizePolicy, QAction, 
+    QMessageBox, QStackedWidget, QToolButton, QSplitter, QFrame
 )
 from PyQt5.QtCore import Qt, QRegExp
 from PyQt5.QtGui import QIntValidator, QRegExpValidator, QIcon, QPixmap
@@ -21,7 +22,7 @@ os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = os.path.join(os.environ["CONDA_PREFI
 if sys.platform == "linux":
     os.environ["QT_QPA_PLATFORM"] = "xcb"  # Fix for Linux: Could not find a Qt installation of ''; Force to use xcb
 
-from info import AUTHOR, VERSION
+from info import AUTHOR, VERSION, LOGO_PATH, STYLE_PATH
 from info_dialog import InfoDialog
 from stats_view import display_plots_in_layout, display_stats_in_textedit, get_model_name_from_common_name
 
@@ -38,15 +39,107 @@ class MainApp(QMainWindow):
         self.setGeometry(100, 100, 1200, 800)
         self.setMinimumWidth(600)
         self.setMinimumHeight(500)
-
-        self.setWindowIcon(QIcon("UI/assets/logo.png"))
+        
+        self.setWindowIcon(QIcon(LOGO_PATH))
 
         # Main Layout
         main_layout = QHBoxLayout()
+        main_layout.setObjectName("main_layout")
 
-        # Left Area (Predizione e Log)
+        # Splitter for the left and right areas
+        splitter = QSplitter(Qt.Horizontal)
+        splitter.setObjectName("splitter")
+
+        # ------ Main Left Area (Prediction and Log) ------ #
         left_layout = QVBoxLayout()
 
+        self.__set_left_layout(left_layout)
+
+        #main_layout.addLayout(left_layout, 2)  # 2/3 width
+        
+        # Container Widget to hold the left layout
+        left_container = QWidget()
+        left_container.setObjectName("left_container")
+        left_container.setLayout(left_layout)
+
+        # Add the left container to the splitter
+        splitter.addWidget(left_container)
+
+
+        # ------ Right Area (Biopython 3D) ------ #
+        self.right_layout = QVBoxLayout()
+        
+        # This function will be used to set the right layout content
+        self.__set_right_layout()
+       
+        #main_layout.addLayout(self.right_layout, 1)  # 1/3 width
+
+        # Container Widget to hold the right layout
+        right_container = QWidget()
+        right_container.setObjectName("right_container")
+        right_container.setLayout(self.right_layout)
+        
+        # Add the right container to the splitter
+        splitter.addWidget(right_container)
+        splitter.setSizes([600, 200])
+
+        main_layout.addWidget(splitter)
+
+        # Set the central widget
+        container = QWidget()
+        container.setObjectName("main_container")
+        container.setLayout(main_layout)
+        self.setCentralWidget(container)
+
+        # Create the menu
+        self.__create_menu()
+
+        # Load the stylesheet
+        self.__load_stylesheet()
+
+
+    # ---- GUI Functions ---- #
+
+    def __load_stylesheet(self):
+        try:
+            with open(STYLE_PATH, "r") as file:
+                self.setStyleSheet(file.read())
+        except FileNotFoundError:
+            QMessageBox.warning(self, "Errore", "File di stile non trovato.")
+        except Exception as e:
+            QMessageBox.warning(self, "Errore", f"Errore nel caricamento dello stile: {e}")
+
+
+    def __create_menu(self):
+        """
+            Create the menu bar.
+        """
+        # Menu Bar
+        menubar = self.menuBar()
+
+        # Menu File
+        file_menu = menubar.addMenu("File")
+        exit_action = QAction("Esci", self)
+        exit_action.triggered.connect(self.close)  #Close the application
+        file_menu.addAction(exit_action)
+
+        # Menu About
+        about_menu = menubar.addMenu("About")
+        info_action = QAction("Info", self)
+        info_action.triggered.connect(self.__show_info_dialog)  # Show dialog Info
+        about_menu.addAction(info_action)
+
+
+    def __show_info_dialog(self):
+        dialog = InfoDialog(self)
+        dialog.exec_()
+
+
+    def __set_left_layout(self, left_layout):
+        """
+            Set the left layout content.
+        """
+        
         # Section: Add Email Address
         email_layout = QHBoxLayout()
         email_layout.setAlignment(Qt.AlignLeft)
@@ -146,52 +239,79 @@ class MainApp(QMainWindow):
 
         left_layout.addWidget(self.log_output)
 
-        main_layout.addLayout(left_layout, 2)  # 2/3 width
 
-        # Right Area (Biopython 3D)
-        self.right_layout = QVBoxLayout()
-        self.biopython_view = QLabel("Biopython Proteina 3D")
-        self.biopython_view.setAlignment(Qt.AlignCenter)
-        self.right_layout.addWidget(self.biopython_view)
+
+    def __set_right_layout(self):
+        """
+            Set the right layout content.
+        """
+        self.right_layout.setContentsMargins(0, 0, 0, 0) 
+
+         # Spacer per allineare con il prediction output
+        spacer = QSpacerItem(80, 100, QSizePolicy.Minimum, QSizePolicy.Minimum)
+        self.right_layout.addSpacerItem(spacer)
+        """
+        &::checked {
+                            background-color: #5d5d5d;
+                        }
+        """
+        # Accordion: Section: Biopython 3D
+        biopython_button = QToolButton()
+        biopython_button.setText("Biopython 3D")
+        biopython_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        biopython_button.setCheckable(True)
+        biopython_button.setChecked(False)
+        biopython_button.clicked.connect(lambda: self.__toggle_section(biopython_content, biopython_button))
+        self.right_layout.addWidget(biopython_button)
+
+        biopython_content = QFrame()
+        biopython_content.setObjectName("biopython_frame")
+        biopython_content.setFrameShape(QFrame.Box)
+
+        biopython_layout = QVBoxLayout()
+        biopython_layout.setContentsMargins(1, 1, 1, 1) 
         
-        main_layout.addLayout(self.right_layout, 1)  # 1/3 width
+        biopython_label = QLabel("Contenuto Biopython Proteina 3D")
+        biopython_label.setAlignment(Qt.AlignCenter)
+        
+        biopython_layout.addWidget(biopython_label)
+        biopython_content.setLayout(biopython_layout)
+        biopython_content.setVisible(False) # Hide the content by default
 
-        # Set the central widget
-        container = QWidget()
-        container.setLayout(main_layout)
-        self.setCentralWidget(container)
+        self.right_layout.addWidget(biopython_content)
 
-        # Create the menu
-        self.__create_menu()
+        # Accordion: Sezione Grafici Statistica Modello
+        statistics_button = QToolButton()
+        statistics_button.setText("Grafici Statistica Modello")
+        statistics_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        statistics_button.setCheckable(True)
+        statistics_button.setChecked(False)
+        statistics_button.clicked.connect(lambda: self.__toggle_section(statistics_content, statistics_button))
+        self.right_layout.addWidget(statistics_button)
+
+        statistics_content = QLabel("Contenuto Grafici Statistica Modello")
+        statistics_content.setAlignment(Qt.AlignCenter)
+        statistics_content.setVisible(False)
+
+        self.right_layout.addWidget(statistics_content)
+
+        self.right_layout.addSpacerItem(QSpacerItem(10, 100, QSizePolicy.Minimum, QSizePolicy.Expanding))
 
 
-    # ---- GUI Functions ---- #
 
-    def __create_menu(self):
+
+    def __switch_view(self, index):
         """
-            Create the menu bar.
+            Switch the view in the right layout using the StackedWidget.
         """
-        # Menu Bar
-        menubar = self.menuBar()
-
-        # Menu File
-        file_menu = menubar.addMenu("File")
-        exit_action = QAction("Esci", self)
-        exit_action.triggered.connect(self.close)  #Close the application
-        file_menu.addAction(exit_action)
-
-        # Menu About
-        about_menu = menubar.addMenu("About")
-        info_action = QAction("Info", self)
-        info_action.triggered.connect(self.__show_info_dialog)  # Show dialog Info
-        about_menu.addAction(info_action)
+        self.stacked_widget.setCurrentIndex(index)
 
 
-    def __show_info_dialog(self):
-        dialog = InfoDialog(self)
-        dialog.exec_()
-
+    def __toggle_section(self, section, button):
+        """Mostra o nasconde una sezione accordion."""
+        section.setVisible(button.isChecked())
     
+
     def __disable_all_inputs(self):
         """
         Disable all input fields and buttons.
