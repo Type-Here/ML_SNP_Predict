@@ -168,3 +168,66 @@ QToolButton:checked {
     border: 1px solid #4d4d4d;
     padding: 1px;
 }
+
+
+
+/* ------- ScrollBar ------- */
+
+/* Style for vertical scrollbar */
+QScrollBar:vertical {
+    background: #2d2d2d;
+    width: 12px;
+    margin: 0px 0px 0px 0px;
+    border: 1px solid #4d4d4d;
+    border-radius: 4px;
+}
+
+QScrollBar::handle:vertical {
+    background: #505050;
+    min-height: 20px;
+    border-radius: 4px;
+}
+
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical {
+    background: none;
+    height: 0px;
+    width: 0px;
+}
+
+QScrollBar::add-page:vertical, 
+QScrollBar::sub-page:vertical {
+    background: none;
+}
+
+/* Style for horizontal scrollbar */
+QScrollBar:horizontal {
+    background: #2d2d2d;
+    height: 12px;
+    margin: 0px 0px 0px 0px;
+    border: 1px solid #4d4d4d;
+    border-radius: 4px;
+}
+
+QScrollBar::handle:horizontal {
+    background: #505050;
+    min-width: 20px;
+    border-radius: 4px;
+}
+
+QScrollBar::add-line:horizontal,
+QScrollBar::sub-line:horizontal {
+    background: none;
+    width: 0px;
+    height: 0px;
+}
+
+QScrollBar::add-page:horizontal, 
+QScrollBar::sub-page:horizontal {
+    background: none;
+}
+
+
+QScrollBar::handle:vertical:hover, QScrollBar::handle:horizontal:hover {
+    background: #6d6d6d;
+}
