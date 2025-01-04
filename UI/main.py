@@ -2,7 +2,7 @@ import sys
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, 
     QLabel, QPushButton, QComboBox, QLineEdit, QTextEdit, QSpacerItem, QSizePolicy, QAction, 
-    QMessageBox, QStackedWidget, QToolButton, QSplitter, QFrame
+    QMessageBox, QStackedWidget, QToolButton, QSplitter, QFrame, QScrollArea
 )
 from PyQt5.QtCore import Qt, QRegExp
 from PyQt5.QtGui import QIntValidator, QRegExpValidator, QIcon, QPixmap
@@ -135,6 +135,8 @@ class MainApp(QMainWindow):
         dialog.exec_()
 
 
+    # ---------- Left Layout ---------- #
+
     def __set_left_layout(self, left_layout):
         """
             Set the left layout content.
@@ -239,7 +241,8 @@ class MainApp(QMainWindow):
 
         left_layout.addWidget(self.log_output)
 
-
+    
+    # ---------- Right Layout ---------- #
 
     def __set_right_layout(self):
         """
@@ -250,61 +253,89 @@ class MainApp(QMainWindow):
          # Spacer per allineare con il prediction output
         spacer = QSpacerItem(80, 100, QSizePolicy.Minimum, QSizePolicy.Minimum)
         self.right_layout.addSpacerItem(spacer)
-        """
-        &::checked {
-                            background-color: #5d5d5d;
-                        }
-        """
-        # Accordion: Section: Biopython 3D
+       
+        # Accordion: Section: Biopython 3D #
+        
+        # Accordion Byopython Button
         biopython_button = QToolButton()
         biopython_button.setText("Biopython 3D")
         biopython_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        biopython_button.setObjectName("biopython_3d_button")
         biopython_button.setCheckable(True)
         biopython_button.setChecked(False)
-        biopython_button.clicked.connect(lambda: self.__toggle_section(biopython_content, biopython_button))
         self.right_layout.addWidget(biopython_button)
 
+        # Biopython Content
         biopython_content = QFrame()
         biopython_content.setObjectName("biopython_frame")
         biopython_content.setFrameShape(QFrame.Box)
 
         biopython_layout = QVBoxLayout()
+        biopython_layout.setObjectName("biopython_layout")
         biopython_layout.setContentsMargins(1, 1, 1, 1) 
         
         biopython_label = QLabel("Contenuto Biopython Proteina 3D")
         biopython_label.setAlignment(Qt.AlignCenter)
+
+        # Scroll area for the QFrame
+        bio_scroll_area = QScrollArea()
+        bio_scroll_area.setWidget(biopython_content)  
+        bio_scroll_area.setWidgetResizable(True)
+        bio_scroll_area.setMinimumHeight(300)
+        bio_scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        bio_scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+
         
         biopython_layout.addWidget(biopython_label)
         biopython_content.setLayout(biopython_layout)
-        biopython_content.setVisible(False) # Hide the content by default
+        
+        # Connect the button to the function to show/hide the content
+        biopython_button.clicked.connect(lambda: self.__toggle_section(bio_scroll_area, biopython_button))
+        bio_scroll_area.setVisible(False) # Hide the content by default
 
-        self.right_layout.addWidget(biopython_content)
+        self.right_layout.addWidget(bio_scroll_area)
 
-        # Accordion: Sezione Grafici Statistica Modello
-        statistics_button = QToolButton()
-        statistics_button.setText("Grafici Statistica Modello")
-        statistics_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        statistics_button.setCheckable(True)
-        statistics_button.setChecked(False)
-        statistics_button.clicked.connect(lambda: self.__toggle_section(statistics_content, statistics_button))
-        self.right_layout.addWidget(statistics_button)
+        # Accordion: Setion: Model Stats #
 
-        statistics_content = QLabel("Contenuto Grafici Statistica Modello")
-        statistics_content.setAlignment(Qt.AlignCenter)
-        statistics_content.setVisible(False)
+        # Model Stats Button
+        stats_button = QToolButton()
+        stats_button.setText("Grafici Statistica Modello")
+        stats_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        stats_button.setObjectName("model_stats_button")
+        stats_button.setCheckable(True)
+        stats_button.setChecked(False)
+        self.right_layout.addWidget(stats_button)
 
-        self.right_layout.addWidget(statistics_content)
+        # Model Stats Content
+        stats_content = QFrame()
+        stats_content.setObjectName("stats_frame")
+        stats_content.setFrameShape(QFrame.Box)
 
+        stats_layout = QVBoxLayout()
+        stats_layout.setObjectName("stats_layout")
+        stats_layout.setContentsMargins(1, 1, 1, 1) 
+        
+        stats_label = QLabel("Contenuto Grafici Statistica Modello")
+        stats_label.setAlignment(Qt.AlignCenter)
+        stats_layout.addWidget(stats_label)
+
+        # Scroll area for the QFrame
+        stat_scroll_area = QScrollArea()
+        stat_scroll_area.setWidget(stats_content)  
+        stat_scroll_area.setWidgetResizable(True)
+        stat_scroll_area.setMinimumHeight(300)
+        stat_scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        stat_scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+
+        # Connect the button to the function to show/hide the content
+        stats_button.clicked.connect(lambda: self.__toggle_section(stat_scroll_area, stats_button))
+        stat_scroll_area.setVisible(False)
+
+        stats_content.setLayout(stats_layout)
+        self.right_layout.addWidget(stat_scroll_area)
+
+        # Accordion: Spacer #
         self.right_layout.addSpacerItem(QSpacerItem(10, 100, QSizePolicy.Minimum, QSizePolicy.Expanding))
-
-
-
-
-    def __switch_view(self, index):
-        """
-            Switch the view in the right layout using the StackedWidget.
-        """
-        self.stacked_widget.setCurrentIndex(index)
 
 
     def __toggle_section(self, section, button):
@@ -320,6 +351,21 @@ class MainApp(QMainWindow):
         self.position_input.setReadOnly(True)
         self.mut_dropdown.setDisabled(True)
         self.predict_button.setDisabled(True)
+
+    def __clear_layout(self, layout):
+        """
+            Clear the layout by removing all widgets and layouts.
+        """
+        while layout.count():
+            item = layout.takeAt(0)  # Remove the item at index 0
+            widget = item.widget()  # Check if the item has a widget
+            if widget is not None:
+                widget.deleteLater()  # Delete the widget
+            else:
+                layout_item = item.layout()  # Check if the item has a layout
+                if layout_item is not None:
+                    self.__clear_layout(layout_item)  # Delete the layout recursively
+            
 
 
     # --- Train Dialog Functions --- #
