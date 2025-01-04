@@ -133,3 +133,21 @@ def retrain_model_to_save(model, X_train, y_train) -> tuple[tf.keras.Model, tf.k
     )
 
     return model, history
+
+
+def model_predict(model: tf.keras.Model, X: pd.DataFrame) -> tf.Tensor:
+    """
+        Predict the labels for the given features.
+        Parameters:
+            model: The trained model.
+            X: The features to predict.
+        Returns:
+            Predicted probabilities, the predicted classes
+    """
+    # Convert to Tensor
+    X_tensor = tf.convert_to_tensor(X.values, dtype=tf.float32)
+
+    # Predict Probabilities
+    probabilities = model.predict(X_tensor)
+
+    return probabilities, tf.argmax(probabilities, axis=1)
