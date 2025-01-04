@@ -278,5 +278,13 @@ fabric.properties
 .directory
 
 # Data And Model
-data/
+data/raw/*
+data/processed/*
+data/protein/
+data/sequences/
+
 models/
+
+
+# Exclude hras.csv from gitignore - add it to the repo:
+!data/raw/hras.csv
