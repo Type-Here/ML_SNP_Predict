@@ -17,8 +17,9 @@ def load_data(protein='p53'):
     
     match protein:
         case 'p53': 
-            return _ensure_p53_data()
-
+            return __ensure_p53_data()
+        case 'hras':
+            return __ensure_hras_data()
         case _: 
             ValueError(f"Protein {protein} not supported.")
 
@@ -26,7 +27,7 @@ def load_data(protein='p53'):
 
 
 # Internal function to ensure p53 data is available
-def _ensure_p53_data():
+def __ensure_p53_data():
     """
         Ensures that the p53 data file is available and ready for use.
     
@@ -89,6 +90,28 @@ def _ensure_p53_data():
     #print(f"File salvato in: {processed_path}")
     
     return df
+
+# ------------------------------ HRAS Data ------------------------------ #
+
+def __ensure_hras_data():
+    """
+        Ensures that the HRAS data file is available and ready for use.
+        Loads the HRAS data from the 'raw' directory.
+
+        Note: The HRAS data is already available in the 'raw' directory and does not need to be downloaded.
+              This because source (LOVD) does not provide a simple API to download the data.
+        Returns:
+            pd.DataFrame: The DataFrame containing the HRAS data.
+        Raises:
+            
+    """
+    raw_path = os.path.join(DATA_PATH, 'raw', 'hras.csv')
+
+    if not os.path.exists(raw_path):
+        raise FileNotFoundError(f"File HRAS non trovato in: {raw_path}")
+
+    return pd.read_csv(raw_path)
+
 
 
 # ------------------------------ Save Dataset ------------------------------ #
