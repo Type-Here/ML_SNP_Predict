@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QTextEdit
+from PyQt5.QtWidgets import QTextEdit, QVBoxLayout, QLayout, QWidget
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import json
@@ -36,13 +36,13 @@ def display_stats_in_textedit(stats_file:str, text_edit:QTextEdit):
 
 
 
-def display_plots_in_layout(stats_file, layout, text_edit):
+def display_plots_in_layout(stats_file, layout:QLayout, text_edit):
     """
     Display AUC and Loss plots in a QVBoxLayout.
 
     Parameters:
         stats_file (str): Path to the JSON file containing model statistics.
-        layout (QVBoxLayout): The QVBoxLayout to display the plots.
+        layout (QVBoxLayout): The Layout in which to display the plots.
         text_edit (QTextEdit): The QTextEdit widget to display warnings or errors.
     """
     try:
@@ -52,6 +52,8 @@ def display_plots_in_layout(stats_file, layout, text_edit):
         # Prepare the figures
         figure = Figure()
         canvas = FigureCanvas(figure)
+
+        layout.setContentsMargins(10, 10, 10, 10)  # Set margins
         layout.addWidget(canvas)  # Add canvas to the layout
 
         # Plot AUC
@@ -62,7 +64,7 @@ def display_plots_in_layout(stats_file, layout, text_edit):
         ax_auc.set_title("ROC Curve")
         ax_auc.set_xlabel("False Positive Rate")
         ax_auc.set_ylabel("True Positive Rate")
-        ax_auc.legend(loc="lower right")
+        ax_auc.legend(loc="lower right", bbox_to_anchor=(1, 0))  # Legend outside the plot
 
         # Plot Loss
         ax_loss = figure.add_subplot(212)  # Second subplot
@@ -71,15 +73,22 @@ def display_plots_in_layout(stats_file, layout, text_edit):
         ax_loss.set_title("Loss During Training")
         ax_loss.set_xlabel("Epoch")
         ax_loss.set_ylabel("Loss")
-        ax_loss.legend(loc="upper right")
+        ax_loss.legend(loc="upper right", bbox_to_anchor=(1, 1))
+
+        # Optimize layout
+        figure.tight_layout(rect=[0, 0, 0.85, 1])  # Adjust the layout to fit the canvas
 
         # Refresh the canvas
+        canvas.setMaximumWidth(600)  
+        canvas.setMinimumWidth(300) 
+        canvas.setMinimumHeight(500)
         canvas.draw()
 
     except FileNotFoundError:
         text_edit.setPlainText("Warning: Statistics file not found.")
     except json.JSONDecodeError:
         text_edit.setPlainText("Error: Unable to decode the statistics file.")
+
 
 
 
