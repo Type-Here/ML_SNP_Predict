@@ -5,6 +5,7 @@
 
 import os
 import tensorflow as tf
+import pandas as pd
 #from tensorflow.python.keras.models import Sequential
 #from tensorflow.python.keras.layers import Dense, Dropout
 from keras.api.models import Sequential
@@ -112,7 +113,7 @@ def save_model(model: tf.keras.Model, name: str = P53_MODEL_NAME):
 
 
 
-def train_model_to_save(model, X_train, y_train) -> tuple[tf.keras.Model, tf.keras.callbacks.History]:
+def retrain_model_to_save(model, X_train, y_train) -> tuple[tf.keras.Model, tf.keras.callbacks.History]:
     """
         Train a model with all the given data in order to save it.
         It does not split the data into training and test sets.

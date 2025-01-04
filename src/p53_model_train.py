@@ -90,7 +90,7 @@ class TrainingThread(QThread):
             # Train the model to save it
             self.log_signal.emit("Training the model with all the data to save it...")
 
-            model, history = p53_model.train_model_to_save(model, X_resampled, y_resampled)
+            model, history = p53_model.retrain_model_to_save(model, X_resampled, y_resampled)
 
             # Save the model
             self.log_signal.emit("\nSaving the model...")
