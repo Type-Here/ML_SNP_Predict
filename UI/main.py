@@ -8,8 +8,8 @@ from PyQt5.QtGui import QIntValidator, QRegExpValidator, QIcon, QPixmap
 
 import os
 
-from src.p53_model_train import TrainingThread
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from src.p53_model_train import TrainingThread #TODO Generalize the TrainingThread to be used for all models
 
 #from ..src import MODELS_DIR, DATA_PATH, MODELS_STATS_DIR, PFAM_PATH
 from src.fasta.fasta_seq import get_fasta_sequence_by_model_name
@@ -149,12 +149,12 @@ class MainApp(QMainWindow):
         main_layout.addLayout(left_layout, 2)  # 2/3 width
 
         # Right Area (Biopython 3D)
-        right_layout = QVBoxLayout()
+        self.right_layout = QVBoxLayout()
         self.biopython_view = QLabel("Biopython Proteina 3D")
         self.biopython_view.setAlignment(Qt.AlignCenter)
-        right_layout.addWidget(self.biopython_view)
+        self.right_layout.addWidget(self.biopython_view)
         
-        main_layout.addLayout(right_layout, 1)  # 1/3 width
+        main_layout.addLayout(self.right_layout, 1)  # 1/3 width
 
         # Set the central widget
         container = QWidget()
@@ -256,6 +256,7 @@ class MainApp(QMainWindow):
 
     def load_model(self):
         # Get User Input
+        self.prediction_output.clear()
         self.active_model = self.model_dropdown.currentText()
         self.email = self.email_input.text()
 
@@ -295,7 +296,6 @@ class MainApp(QMainWindow):
         self.position_input.setReadOnly(False)
         self.mut_dropdown.setDisabled(False)  
         self.predict_button.setDisabled(False)  
-        self.prediction_output.clear()
 
 
     def predict(self):
@@ -344,17 +344,20 @@ class MainApp(QMainWindow):
         # Load the stats
 
         model = get_model_name_from_common_name(self.active_model)
-
+        stats_file = os.path.join(MODELS_STATS_DIR, f"{model}_stats.json")
         # Display the stats in the text edit
         display_stats_in_textedit(
-            stats_file=os.path.join(MODELS_STATS_DIR, f"{model}.json"),
+            stats_file=stats_file,
             text_edit=self.prediction_output
         )
+        
+        self.log_output.append("Statistiche caricate.")
+        self.prediction_output.append("-- Fine Statistiche --")
 
         # Display the plots in the layout
         display_plots_in_layout(
-            stats_file=os.path.join(MODELS_STATS_DIR, f"{model}.json"),
-            layout= self.biopython_view, # TODO: Change to the correct layout
+            stats_file=stats_file,
+            layout= self.right_layout, # TODO: Change to the correct layout
             text_edit=self.prediction_output
         )
 
