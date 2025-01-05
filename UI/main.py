@@ -229,6 +229,7 @@ class MainApp(QMainWindow):
 
         # Section: Prediction Output
         self.prediction_output = QTextEdit()
+        self.prediction_output.setAcceptRichText(True)
         self.prediction_output.setReadOnly(True)
         self.prediction_output.setPlaceholderText("Dati di Predizione e Score")
 
@@ -236,8 +237,10 @@ class MainApp(QMainWindow):
 
         # Section: Log
         self.log_output = QTextEdit()
+        self.log_output.setAcceptRichText(True) 
         self.log_output.setReadOnly(True)
         self.log_output.setPlaceholderText("Log")
+        self.log_output.setMaximumHeight(200)
 
         left_layout.addWidget(self.log_output)
 
