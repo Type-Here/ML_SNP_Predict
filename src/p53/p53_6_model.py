@@ -63,8 +63,8 @@ def p53_train_model(X_train, y_train, X_test, y_test) -> tuple[tf.keras.Model, t
     )
 
     # Evaluate the model
-    print("\nTest Evaluation:")
-    print(model.evaluate(X_test, tf.keras.utils.to_categorical(y_test)))
+    #print("\nTest Evaluation:")
+    #print(model.evaluate(X_test, tf.keras.utils.to_categorical(y_test)))
 
     return model, history
 

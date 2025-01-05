@@ -17,6 +17,9 @@ def p53_scaling(data:pd.DataFrame) -> pd.DataFrame:
     # Scale the data
     data = _dna_position_norm(data)
 
+    # Inform the user
+    print("\nNormalized numerical columns.")
+
     return data
 
 def _dna_position_norm(data:pd.DataFrame) -> pd.DataFrame:
@@ -32,10 +35,6 @@ def _dna_position_norm(data:pd.DataFrame) -> pd.DataFrame:
     # Apply MinMaxScaler
     scaler = MinMaxScaler()
     data[numerical_columns] = scaler.fit_transform(data[numerical_columns])
-
-    # Verify the normalized dataset
-    print("\nDataset after normalizing numerical columns:")
-    print(data[numerical_columns].head())
 
     return data
 

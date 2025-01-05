@@ -6,6 +6,7 @@
 
 import pandas as pd
 from sklearn.preprocessing import OneHotEncoder
+import sys
     
 
 def p53_encoding(dataset:pd.DataFrame, pfam:bool = False) -> pd.DataFrame:
@@ -194,7 +195,8 @@ def _pathogenicity_encoding(dataset):
 
     # Check for NaN values after mapping
     if dataset['Pathogenicity'].isnull().any():
-        print("\nRows with NaN in 'Pathogenicity':")
+        # StdErr: Print rows with NaN in 'Pathogenicity'
+        print("\n-- Warning: Rows with NaN in 'Pathogenicity':",  file=sys.stderr)
         print(dataset[dataset['Pathogenicity'].isnull()])
         # Drop rows with NaN in 'Pathogenicity' (or handle as appropriate)
         dataset = dataset.dropna(subset=['Pathogenicity'])
