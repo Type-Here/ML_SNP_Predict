@@ -280,7 +280,7 @@ fabric.properties
 # Data And Model
 data/raw/*
 data/processed/*
-data/protein/
+data/protein/*
 data/sequences/
 
 models/
@@ -288,3 +288,6 @@ models/
 
 # Exclude hras.csv from gitignore - add it to the repo:
 !data/raw/hras.csv
+
+# Load codons_aa.json
+!data/protein/codons_aa.json
