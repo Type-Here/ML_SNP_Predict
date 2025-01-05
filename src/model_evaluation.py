@@ -11,8 +11,9 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 import keras
 import json
+import os
 
-from src.config import MODELS_STATS_DIR
+from src.config import MODELS_STATS_DIR, PLOTS_SAVE_DIR
 
 
 def simple_evaluate_model(model, X_test, y_test):
@@ -94,32 +95,72 @@ def n_times_k_fold_eval(model, X_resampled, y_resampled, n_splits=5, n_repeats=5
 
 
 
-def plot_accuracy(history):
+def plot_accuracy(history, model_name = None):
     """
-        Plot the accuracy of the model during training.
+    Plot the accuracy of the model during training.
+    
+    Parameters:
+        history: The training history object returned by Keras model.fit.
+        model_name: The name of the model to display in the plot title. Default is None: generic title.
+    Returns:
+        matplotlib.figure.Figure: The generated accuracy plot.
     """
-    plt.plot(history.history['accuracy'], label='Accuracy')
-    plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
-    plt.xlabel('Epoch')
-    plt.ylabel('Accuracy')
-    plt.legend()
-    plt.show()
+    figure, ax = plt.subplots(figsize=(8, 6))
+    ax.plot(history.history['accuracy'], label='Accuracy', linewidth=2)
+    ax.plot(history.history['val_accuracy'], label='Validation Accuracy', linestyle='--', linewidth=2)
+    ax.set_xlabel('Epoch', fontsize=14)
+    ax.set_ylabel('Accuracy', fontsize=14)
+    if model_name:
+        title = model_name.replace("_", " ").title()
+        ax.set_title(f'{title}', fontsize=16)
+    else:
+        ax.set_title('Model Accuracy', fontsize=16)
+    ax.legend(fontsize=12, loc="lower right")
+    ax.grid(True, linestyle='--', alpha=0.5)
+    plt.tight_layout()
+    return figure
 
 
-def plot_loss(history):
+def plot_loss(history, model_name = None):
     """
-        Plot the loss of the model during training.
+    Plot the loss of the model during training.
+    
+    Parameters:
+        history: The training history object returned by Keras model.fit.
+        model_name: The name of the model to display in the plot title. Default is None: generic title.
+    Returns:
+        matplotlib.figure.Figure: The generated loss plot.
     """
-    plt.plot(history.history['loss'], label='Loss')
-    plt.plot(history.history['val_loss'], label='Validation Loss')
-    plt.xlabel('Epoch')
-    plt.ylabel('Loss')
-    plt.legend()
-    plt.show()
+    figure, ax = plt.subplots(figsize=(8, 6))
+    ax.plot(history.history['loss'], label='Loss', linewidth=2)
+    ax.plot(history.history['val_loss'], label='Validation Loss', linestyle='--', linewidth=2)
+    ax.set_xlabel('Epoch', fontsize=14)
+    ax.set_ylabel('Loss', fontsize=14)
+    if model_name:
+        title = model_name.replace("_", " ").title()
+        ax.set_title(f'{title}', fontsize=16)
+    else:
+        ax.set_title('Model Loss', fontsize=16)
+    ax.legend(fontsize=12, loc="upper right")
+    ax.grid(True, linestyle='--', alpha=0.5)
+    plt.tight_layout()
+    return figure
 
 
-def plot_curve_auc(model, X_test, y_test):
-    # Compute ROC Curve and AUC for each class
+
+def plot_curve_auc(model, X_test, y_test, model_name=None):
+    """
+    Plot the ROC Curve and compute AUC for each class.
+    
+    Parameters:
+        model: The trained model.
+        X_test: Test data.
+        y_test: True labels for test data.
+        model_name: The name of the model to display in the plot title. Default is None: generic title.
+        
+    Returns:
+        matplotlib.figure.Figure: The generated ROC curve plot.
+    """
     fpr = {}
     tpr = {}
     roc_auc = {}
@@ -130,16 +171,21 @@ def plot_curve_auc(model, X_test, y_test):
         fpr[i], tpr[i], _ = roc_curve(y_test_classes == i, y_pred_probs[:, i])
         roc_auc[i] = roc_auc_score(y_test_classes == i, y_pred_probs[:, i])
 
-    # Plot ROC curves
-    plt.figure(figsize=(10, 8))
+    figure, ax = plt.subplots(figsize=(10, 8))
     for i in range(len(fpr)):
-        plt.plot(fpr[i], tpr[i], label=f"Class {i} (AUC = {roc_auc[i]:.2f})")
-    plt.plot([0, 1], [0, 1], 'k--')  # Random classifier line
-    plt.xlabel("False Positive Rate")
-    plt.ylabel("True Positive Rate")
-    plt.title("ROC Curve")
-    plt.legend(loc="lower right")
-    plt.show()
+        ax.plot(fpr[i], tpr[i], label=f"Class {i} (AUC = {roc_auc[i]:.2f})", linewidth=2)
+    ax.plot([0, 1], [0, 1], 'k--', label='Random Classifier')  # Random classifier line
+    ax.set_xlabel("False Positive Rate", fontsize=14)
+    ax.set_ylabel("True Positive Rate", fontsize=14)
+    if model_name:
+        title = model_name.replace("_", " ").title()
+        ax.set_title(f'{title}', fontsize=16)
+    else:
+        ax.set_title("ROC Curve", fontsize=16)
+    ax.legend(fontsize=12, loc="lower right")
+    ax.grid(True, linestyle='--', alpha=0.5)
+    plt.tight_layout()
+    return figure
 
 
 # -------------------- Helper functions -------------------- #
@@ -265,3 +311,41 @@ def load_stats(model_name):
         # Handle the case where the JSON is invalid
         print(f"Error decoding the JSON file: {e}")
         return None
+
+
+
+# --------------------  Save Plot -------------------- #
+
+
+
+def save_plot_incremental(figure, model_name, output_dir=PLOTS_SAVE_DIR):
+    """
+    Saves a plot incrementally by appending a number to the file name if it already exists.
+    
+    Parameters:
+        figure (matplotlib.figure.Figure): The figure to save.
+        base_name (str): The base name for the file (e.g., "auc", "loss", "accuracy").
+        output_dir (str): Directory where the plots will be saved. Default is 'plots'.
+    """
+    # Create the output directory if it doesn't exist
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # Create the initial file path
+    file_path = os.path.join(output_dir, f"{model_name}.svg")
+    counter = 1
+    
+    # Increment file name if it already exists
+    while os.path.exists(file_path):
+        file_path = os.path.join(output_dir, f"{model_name}_{counter}.svg")
+        counter += 1
+    
+    # Save the figure
+    figure.savefig(file_path, bbox_inches="tight", format="svg")
+    plt.close(figure)  # Close the figure to free memory
+    print(f"Plot saved as: {file_path}")
+
+# Example usage:
+# Assuming you have matplotlib figures for AUC, Loss, and Accuracy:
+# save_plot_incremental(auc_figure, "auc")
+# save_plot_incremental(loss_figure, "loss")
+# save_plot_incremental(accuracy_figure, "accuracy")
