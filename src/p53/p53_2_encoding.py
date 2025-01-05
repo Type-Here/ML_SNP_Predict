@@ -9,7 +9,7 @@ from sklearn.preprocessing import OneHotEncoder
 import sys
     
 
-def p53_encoding(dataset:pd.DataFrame, pfam:bool = False, isPrediction = False) -> pd.DataFrame:
+def p53_encoding(dataset:pd.DataFrame, pfam:bool = False, isPrediction = False, isV2 = True) -> pd.DataFrame:
     """
         Encode the p53 data.
         Operations: \n
@@ -20,22 +20,25 @@ def p53_encoding(dataset:pd.DataFrame, pfam:bool = False, isPrediction = False) 
         - Encode the p53 domain data. Used for the p53 dataset if the Pfam domain data is not available or not used.
         - Encode the pathogenicity data.
     
-        Args:
+        Parameters:
             dataset (pd.DataFrame): The DataFrame containing the data to be encoded.
-        
+            pfam (bool): Whether to encode the Pfam domain data. Default is False.
+            isPrediction (bool): Whether the data is for prediction. Default is False.
+            isV2 (bool): Whether to use the v2 encoding. Default is True.
+
         Returns:
             pd.DataFrame: The DataFrame containing the encoded data.
     """
     
     # Encode the data
 
-    data_encoded = _wt_mut_nucleotide_encoding(dataset)
+    data_encoded = _wt_mut_nucleotide_encoding(dataset, isV2)
     print("Nucleotide encoding done")
 
-    data_encoded = _cDNA_ref_mut_encoding(data_encoded)
+    data_encoded = _cDNA_ref_mut_encoding(data_encoded, isV2)
     print("cDNA encoding done")
 
-    data_encoded = _amino_acid_encoding(data_encoded)
+    data_encoded = _amino_acid_encoding(data_encoded, isV2)
     print("Amino acid encoding done")
 
     if pfam:
@@ -44,7 +47,7 @@ def p53_encoding(dataset:pd.DataFrame, pfam:bool = False, isPrediction = False) 
     elif isPrediction:
         return data_encoded
     else:
-        data_encoded = _p53_domain_encoding(data_encoded)
+        data_encoded = _p53_domain_encoding(data_encoded, isV2)
     
     print("p53 domain encoding done")
 
@@ -55,7 +58,7 @@ def p53_encoding(dataset:pd.DataFrame, pfam:bool = False, isPrediction = False) 
 
 
 
-def _wt_mut_nucleotide_encoding(dataset):
+def _wt_mut_nucleotide_encoding(dataset, isV2 = True):
     """
         Encode the nucleotide data for the wild-type and mutant splitted codons.
     """   
@@ -66,8 +69,12 @@ def _wt_mut_nucleotide_encoding(dataset):
     columns_to_encode = ['WT_Codon_First', 'WT_Codon_Second', 'WT_Codon_Third',
                         'Mutant_Codon_First', 'Mutant_Codon_Second', 'Mutant_Codon_Third']
 
-    # One-hot encoding
-    data = __one_hot_encoding(dataset, columns_to_encode, nucleotide_categories)
+    if isV2:
+        # Ordinal encoding
+        data = __ordinal_encoding(dataset, columns_to_encode, nucleotide_categories)
+    else:
+        # One-hot encoding
+        data = __one_hot_encoding(dataset, columns_to_encode, nucleotide_categories)
 
     # Drop now unnecessary columns
     columns_to_drop = [
@@ -81,7 +88,7 @@ def _wt_mut_nucleotide_encoding(dataset):
 
 
 
-def _cDNA_ref_mut_encoding(dataset):
+def _cDNA_ref_mut_encoding(dataset, isV2 = True):
     """
         Encode the cDNA reference and mutant data.
     """
@@ -89,13 +96,17 @@ def _cDNA_ref_mut_encoding(dataset):
     # Columns to encode
     columns_to_encode = ['cDNA_Ref', 'cDNA_Mut']
 
-    # One-hot encoding
-    data_encoded = __one_hot_encoding(dataset, columns_to_encode, nucleotide_categories)
+    if isV2:
+        # Ordinal encoding
+        data_encoded = __ordinal_encoding(dataset, columns_to_encode, nucleotide_categories)
+    else:
+        # One-hot encoding
+        data_encoded = __one_hot_encoding(dataset, columns_to_encode, nucleotide_categories)
 
     return data_encoded
 
 
-def _amino_acid_encoding(dataset):
+def _amino_acid_encoding(dataset, isV2 = True):
     """
         Encode the amino acid data.
     """
@@ -104,14 +115,18 @@ def _amino_acid_encoding(dataset):
     # Columns to encode
     columns_to_encode = ['WT AA_1','Mutant AA_1']
 
-    # One-hot encoding
-    data_encoded = __one_hot_encoding(dataset, columns_to_encode, aa_categories)
+    if isV2:
+        # Ordinal encoding
+        data_encoded = __ordinal_encoding(dataset, columns_to_encode, aa_categories)
+    else:
+        # One-hot encoding
+        data_encoded = __one_hot_encoding(dataset, columns_to_encode, aa_categories)
 
     return data_encoded
 
 
 
-def _p53_domain_encoding(dataset):
+def _p53_domain_encoding(dataset, isV2 = True):
     """
         Encode the p53 domain data. 
         Used for the p53 dataset if the Pfam domain data is not available or not used.
@@ -122,8 +137,12 @@ def _p53_domain_encoding(dataset):
     domain_columns = ['Domain']
     values = dataset['Domain'].unique()
     
-    # One-hot encoding
-    data_encoded = __one_hot_encoding(dataset, domain_columns, values)
+    if isV2:
+        # Ordinal encoding
+        data_encoded = __ordinal_encoding(dataset, domain_columns, values)
+    else:
+        # One-hot encoding
+        data_encoded = __one_hot_encoding(dataset, domain_columns, values)
 
     return data_encoded
 
@@ -212,3 +231,27 @@ def _pathogenicity_encoding(dataset):
     return dataset
 
 
+# --------------------------------- Category Encoding --------------------------------- #
+
+def __ordinal_encoding(dataset, columns_to_encode, categories):
+    """
+        Encode the specified columns using ordinal encoding.
+        The categories are mapped to integer values.
+
+        Parameters:
+            dataset (pd.DataFrame): The DataFrame containing the data to be encoded.
+            columns_to_encode (list): The list of columns to be encoded.
+            categories (list): The list of valid categories for each column to be encoded.
+        Returns:
+            pd.DataFrame: The DataFrame containing the encoded data.
+    """
+    cat_mapping = {v: i for i, v in enumerate(categories)}
+
+    for col in columns_to_encode:
+        dataset[col + "_Encoded"] = dataset[col].map(cat_mapping)
+    
+    # Drop original columns
+    dataset = dataset.drop(columns=columns_to_encode)
+
+    return dataset
+    
