@@ -13,3 +13,4 @@ dependencies:
       - scikit-learn
       - imbalanced-learn
       - biopython==1.84
+      - ansi2html
