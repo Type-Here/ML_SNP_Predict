@@ -9,7 +9,7 @@ from sklearn.preprocessing import OneHotEncoder
 import sys
     
 
-def p53_encoding(dataset:pd.DataFrame, pfam:bool = False) -> pd.DataFrame:
+def p53_encoding(dataset:pd.DataFrame, pfam:bool = False, isPrediction = False) -> pd.DataFrame:
     """
         Encode the p53 data.
         Operations: \n
@@ -41,8 +41,11 @@ def p53_encoding(dataset:pd.DataFrame, pfam:bool = False) -> pd.DataFrame:
     if pfam:
         #data_encoded = pfam_domain_encoding(data_encoded) # TODO: Implement this function
         pass
+    elif isPrediction:
+        return data_encoded
     else:
         data_encoded = _p53_domain_encoding(data_encoded)
+    
     print("p53 domain encoding done")
 
     data_encoded = _pathogenicity_encoding(data_encoded)
