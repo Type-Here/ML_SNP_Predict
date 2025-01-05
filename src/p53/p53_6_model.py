@@ -11,7 +11,7 @@ import pandas as pd
 from keras.api.models import Sequential
 from keras.api.layers import Dense, Dropout, Input
 from src import MODELS_DIR, P53_MODEL_NAME
-from models_usage import save_model as general_save_model
+from src.models_usage import save_model as general_save_model
 
 def p53_train_model(X_train, y_train, X_test, y_test) -> tuple[tf.keras.Model, tf.keras.callbacks.History]:
     """
@@ -110,14 +110,14 @@ def retrain_model_to_save(model, X_train, y_train) -> tuple[tf.keras.Model, tf.k
     return model, history
 
 
-def model_predict(model: tf.keras.Model, X: pd.DataFrame) -> tf.Tensor:
+def model_predict(model: tf.keras.Model, X: pd.DataFrame) -> tuple[tf.Tensor, tf.Tensor]:
     """
         Predict the labels for the given features.
         Parameters:
             model: The trained model.
             X: The features to predict.
         Returns:
-            Predicted probabilities, the predicted classes
+            Predicted probabilities, the predicted value.
     """
     # Convert to Tensor
     X_tensor = tf.convert_to_tensor(X.values, dtype=tf.float32)
@@ -125,4 +125,4 @@ def model_predict(model: tf.keras.Model, X: pd.DataFrame) -> tf.Tensor:
     # Predict Probabilities
     probabilities = model.predict(X_tensor)
 
-    return probabilities, tf.argmax(probabilities, axis=1)
+    return probabilities, probabilities[tf.argmax(probabilities, axis=1)]
