@@ -10,7 +10,7 @@ import os
 from sklearn.preprocessing import MinMaxScaler
 from src import MODELS_DIR, P53_MODEL_NAME, P53_PFAM_MODEL_NAME, HRAS_MODEL_NAME
 from src.dataset_file_management import load_codons_aa_json, load_processed_data, save_processed_data
-from src.p53.p53_2_encoding import __one_hot_encoding, p53_encoding
+from src.p53.p53_2_encoding import __one_hot_encoding, p53_encoding, __ordinal_encoding
 
 ## --------------------------- LOAD MODELS --------------------------- ##
 
@@ -125,7 +125,7 @@ def get_prediction(model_name:str, model:tf.keras.Model,
             return None
         
 
-def _p53_prediction(model, position, ref, mut, sequence, pfam=False):
+def _p53_prediction(model, position, ref, mut, sequence, pfam=False, isV2 = True):
     from src.p53.p53_6_model import model_predict as p53_predict # Import here to avoid circular import
     """
         Get the prediction of the p53 model.
@@ -136,6 +136,7 @@ def _p53_prediction(model, position, ref, mut, sequence, pfam=False):
             mut: The mutated amino acid.
             sequence: The protein sequence.
             pfam: Whether to use the Pfam model. Default is False.
+            isV2: Whether to use the v2 encoding. Default is True.
         Returns:
             The probability and label of the prediction. If an error occurs, None is returned.
     """
@@ -190,7 +191,10 @@ def _p53_prediction(model, position, ref, mut, sequence, pfam=False):
             pd_input = pd.DataFrame(input, index=[0])
 
             encoded = p53_encoding(pd_input, isPrediction=True)
-            encoded = __one_hot_encode_domain(encoded, __get_domains(processed_data))
+            if isV2:
+                encoded = __ordinal_encode_domain(encoded, __get_domains(processed_data))
+            else:
+                encoded = __one_hot_encode_domain(encoded, __get_domains(processed_data))
 
             # Normalize the data
             encoded = __normalize_cdna_position(encoded, sequence)
@@ -289,6 +293,17 @@ def __one_hot_encode_domain(input, domains):
     input = __one_hot_encoding(input, ['Domain'], domains)
     return input
 
+def __ordinal_encode_domain(input, domains):
+    """
+        Ordinal encode the domain.
+        Parameters:
+            input: The input data.
+            domains: The domains list.
+        Returns:
+            The input data with the domain ordinal encoded.
+    """
+    input = __ordinal_encoding(input, ['Domain'], domains)
+    return input
 
 
 # --------------------------- POSITION NORMALIZATION --------------------------- #
