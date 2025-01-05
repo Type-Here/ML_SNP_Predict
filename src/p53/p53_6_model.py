@@ -5,6 +5,7 @@
 
 import os
 import tensorflow as tf
+import numpy as np
 import pandas as pd
 #from tensorflow.python.keras.models import Sequential
 #from tensorflow.python.keras.layers import Dense, Dropout
@@ -37,8 +38,8 @@ def p53_train_model(X_train, y_train, X_test, y_test) -> tuple[tf.keras.Model, t
 
     model = Sequential([
         Input(shape=(X_train.shape[1],)),
-        Dense(64, activation='relu'),
-        Dropout(0.3),
+        #Dense(64, activation='relu'),
+        #Dropout(0.3),
         Dense(128, activation='relu'),
         Dropout(0.3),  # Prevent overfitting
         Dense(64, activation='relu'),
@@ -110,14 +111,15 @@ def retrain_model_to_save(model, X_train, y_train) -> tuple[tf.keras.Model, tf.k
     return model, history
 
 
-def model_predict(model: tf.keras.Model, X: pd.DataFrame) -> tuple[tf.Tensor, tf.Tensor]:
+def model_predict(model: tf.keras.Model, X: pd.DataFrame) -> tuple[tf.Tensor, np.ndarray]:
     """
         Predict the labels for the given features.
         Parameters:
             model: The trained model.
             X: The features to predict.
         Returns:
-            Predicted probabilities, the predicted value.
+            Predicted probabilities: as a Tensor
+            Predicted labels: as a numpy array of indexes
     """
     # Convert to Tensor
     X_tensor = tf.convert_to_tensor(X.values, dtype=tf.float32)
@@ -125,4 +127,4 @@ def model_predict(model: tf.keras.Model, X: pd.DataFrame) -> tuple[tf.Tensor, tf
     # Predict Probabilities
     probabilities = model.predict(X_tensor)
 
-    return probabilities, probabilities[tf.argmax(probabilities, axis=1)]
+    return probabilities, tf.argmax(probabilities, axis=1).numpy()
