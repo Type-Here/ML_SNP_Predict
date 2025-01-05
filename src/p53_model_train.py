@@ -93,6 +93,15 @@ class TrainingThread(QThread):
                 model_name=P53_MODEL_NAME
             )
 
+            plot_acc = ev.plot_accuracy(history, model_name=P53_MODEL_NAME)            
+            ev.save_plot_incremental(plot_acc, model_name=P53_MODEL_NAME)
+
+            plot_loss = ev.plot_loss(history, model_name=P53_MODEL_NAME)
+            ev.save_plot_incremental(plot_loss, model_name=P53_MODEL_NAME)
+
+            plot_auc = ev.plot_curve_auc(model, X_test, y_test, model_name=P53_MODEL_NAME)
+            ev.save_plot_incremental(plot_auc, model_name=P53_MODEL_NAME)
+
             self.log_signal.emit("\nCross-validation evaluation:")
             ev.n_times_k_fold_eval(model, X_resampled, y_resampled, n_splits=10, n_repeats=2)
 
