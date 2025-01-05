@@ -568,7 +568,7 @@ class MainApp(QMainWindow):
         probabilities, label = results
         
         self.prediction_output.append(f"<b>Predizione Modello:</b> {position}")
-        self.prediction_output.append(f"- Label mutazione predetta: {label}")
+        self.prediction_output.append(f"- Label mutazione predetta: <b>{label}</b>")
         self.prediction_output.append(f"- Probabilità: {probabilities}")
         
 
