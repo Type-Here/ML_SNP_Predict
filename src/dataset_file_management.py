@@ -1,8 +1,9 @@
 import os
+import json
 import pandas as pd
 import requests
 import zipfile
-from src.config import DATA_PATH
+from src.config import DATA_PATH, PFAM_PATH
 
 def load_data(protein='p53'):
     """
@@ -144,3 +145,40 @@ def save_processed_data(data, model_name, is_encoded=False):
     return save_path
 
 
+# ------------------------------ Load Codons - AA Json ------------------------------ #
+
+def load_codons_aa_json():
+    """
+        Load the codons to amino acids mapping from the JSON file.
+    
+        Returns:
+            dict: The mapping of codons to amino acids.
+    """
+    file_path = os.path.join(PFAM_PATH, 'codons_aa.json')
+    
+    with open(file_path, 'r') as file:
+        return json.load(file)
+    
+
+# ------------------------------ Load Processed Data ------------------------------ #
+
+def load_processed_data(model_name, is_encoded=False):
+    """
+        Load the processed data from a CSV file.
+        If the data is encoded, the file name will include '_encoded'.
+    
+        Args:
+            model_name (str): The name of the model for which the data is being loaded.
+            is_encoded (bool): Whether the data is encoded. Default is False.
+
+        Returns:
+            pd.DataFrame: The processed data loaded from the CSV file.
+    """
+    if is_encoded:
+        model_name += '_encoded'
+    file_path = os.path.join(DATA_PATH, 'processed', f"{model_name}_data.csv")
+
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"File non trovato in: {file_path}")
+
+    return pd.read_csv(file_path)
