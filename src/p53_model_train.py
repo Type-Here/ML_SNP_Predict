@@ -1,5 +1,5 @@
 import sys
-
+import traceback
 from PyQt5.QtCore import QThread, pyqtSignal
 
 from UI.stream.stream_redirect import StreamRedirector
@@ -38,7 +38,7 @@ class TrainingThread(QThread):
                 self.log_signal.emit("Error loading data.")
                 return
             self.log_signal.emit("Dataset loaded.")
-            self.log_signal.emit('Data: ' + data.shape[0] +' x ' + data.shape[1] + "\n")
+            self.log_signal.emit(f"Data: {data.shape[0]} x {data.shape[1]}\n")
 
             # Preprocess the data
             self.log_signal.emit("Preprocessing the data...")
@@ -118,6 +118,7 @@ class TrainingThread(QThread):
 
         except Exception as e:
             self.log_signal.emit(f"Error during training: {e}")
+            self.log_signal.emit(f"Traceback: {traceback.format_exc()}")
             self.log_signal.emit("Error: Training failed.")
             self.log_signal.emit(" -- Done. --")
             return
