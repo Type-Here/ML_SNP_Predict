@@ -1,4 +1,8 @@
+import sys
+
 from PyQt5.QtCore import QThread, pyqtSignal
+
+from UI.stream.stream_redirect import StreamRedirector
 
 from src.dataset_file_management import load_data, save_processed_data
 from src.config import P53_MODEL_NAME
@@ -18,6 +22,13 @@ class TrainingThread(QThread):
         """
             Run the training process in a separate thread.
         """
+        
+        # Redirect stdout and stderr to capture Keras output
+        stream_redirector = StreamRedirector()
+        stream_redirector.log_signal.connect(self.log_signal)  # Connect to main thread
+        sys.stdout = stream_redirector
+        sys.stderr = stream_redirector
+
 
         try:            
             self.log_signal.emit("Starting the training process...\n")
@@ -110,3 +121,8 @@ class TrainingThread(QThread):
             self.log_signal.emit("Error: Training failed.")
             self.log_signal.emit(" -- Done. --")
             return
+        
+        finally:
+            # Restore stdout and stderr
+            sys.stdout = sys.__stdout__
+            sys.stderr = sys.__stderr__
