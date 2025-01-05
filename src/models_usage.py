@@ -6,8 +6,10 @@ import traceback
 import tensorflow as tf
 import pandas as pd
 import os
+
+from sklearn.preprocessing import MinMaxScaler
 from src import MODELS_DIR, P53_MODEL_NAME, P53_PFAM_MODEL_NAME, HRAS_MODEL_NAME
-from src.dataset_file_management import load_codons_aa_json, load_processed_data
+from src.dataset_file_management import load_codons_aa_json, load_processed_data, save_processed_data
 from src.p53.p53_2_encoding import __one_hot_encoding, p53_encoding
 
 ## --------------------------- LOAD MODELS --------------------------- ##
@@ -167,20 +169,20 @@ def _p53_prediction(model, position, ref, mut, sequence, pfam=False):
             print(f"WT: {wt_aa} -> Mut: {mut_aa}")
 
             input={}
-            input['cDNA_position'] = position
+            input['cDNA_Position'] = position
             input['WT_Codon_First'] = codon[0]
             input['WT_Codon_Second'] = codon[1]
             input['WT_Codon_Third'] = codon[2]
 
-            input['Mut_Codon_First'] = mut_codon[0]
-            input['Mut_Codon_Second'] = mut_codon[1]
-            input['Mut_Codon_Third'] = mut_codon[2]
+            input['Mutant_Codon_First'] = mut_codon[0]
+            input['Mutant_Codon_Second'] = mut_codon[1]
+            input['Mutant_Codon_Third'] = mut_codon[2]
 
-            input['cDNA_ref'] = ref
-            input['cDNA_mut'] = mut
+            input['cDNA_Ref'] = ref
+            input['cDNA_Mut'] = mut
 
-            input['WT_AA'] = wt_aa
-            input['Mut_AA'] = mut_aa
+            input['WT AA_1'] = wt_aa
+            input['Mutant AA_1'] = mut_aa
 
             input = __get_domain_mapping(input, position, processed_data)
 
@@ -190,11 +192,18 @@ def _p53_prediction(model, position, ref, mut, sequence, pfam=False):
             encoded = p53_encoding(pd_input, isPrediction=True)
             encoded = __one_hot_encode_domain(encoded, __get_domains(processed_data))
 
+            # Normalize the data
+            encoded = __normalize_cdna_position(encoded, sequence)
+
+            if True:
+                print(encoded)
+                save_processed_data(encoded, 'p53_prediction_' , is_encoded=True)
+
             # Get the prediction
             prob, prediction = p53_predict(model, encoded)
-            print(f"Prediction: {prob}, Label: {pathogenicity_labels[prediction]}")
+            print(f"Prediction: {prob}, Label: {pathogenicity_labels[prediction.item()]}")
 
-            return prob, pathogenicity_labels[prediction]
+            return prob, pathogenicity_labels[prediction.item()]
 
             
         except FileNotFoundError:
@@ -278,4 +287,33 @@ def __one_hot_encode_domain(input, domains):
             The input data with the domain one-hot encoded.
     """
     input = __one_hot_encoding(input, ['Domain'], domains)
+    return input
+
+
+
+# --------------------------- POSITION NORMALIZATION --------------------------- #
+
+def __normalize_cdna_position(input, sequence, range=(0, 1)):
+    """
+        Normalize the position of the mutation for a single row dataset. 
+        A `cDNA_Position` column is required in the input data.
+        A `MinMaxScaler` is used to normalize the position between rang. Default is (0, 1).
+        Parameters:
+            input: The input data.
+            sequence: The protein sequence.
+            range: The range to normalize the position to. Default is (0, 1).
+        Returns:
+            The input data with the position normalized.
+    """
+
+    # Manually reapply a MinMaxScaler to the position
+    # to normalize it between 0 and 1 because original scaler cannot scale a single value
+    seq_min = 1
+    seq_max = len(sequence)
+    x = input['cDNA_Position']
+
+    x_std = (x - seq_min) / (seq_max - seq_min)
+    x_scaled = x_std * (range[1] - range[0]) + range[0]
+
+    input['cDNA_Position'] = x_scaled
     return input
