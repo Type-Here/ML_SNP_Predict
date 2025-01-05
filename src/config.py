@@ -12,6 +12,7 @@ PFAM_PATH = os.path.join(os.path.dirname(__file__), '../data/protein/')
 # Models directory path
 MODELS_DIR = os.path.join(os.path.dirname(__file__), '../models/')
 MODELS_STATS_DIR = os.path.join(os.path.dirname(__file__), '../models/stats/')
+PLOTS_SAVE_DIR = os.path.join(os.path.dirname(__file__), '../models/plots/')
 
 # p53 variables
 P53_MODEL_NAME = 'p53_model'
