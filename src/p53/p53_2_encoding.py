@@ -74,7 +74,7 @@ def _wt_mut_nucleotide_encoding(dataset):
         'Codon', 'WT_Codon', 'Mutant_Codon'
     ]
 
-    data_cleaned = data.drop(columns=columns_to_drop)
+    data_cleaned = data.drop(columns=columns_to_drop, errors='ignore')
 
     return data_cleaned
 
@@ -113,19 +113,19 @@ def _amino_acid_encoding(dataset):
 
 def _p53_domain_encoding(dataset):
     """
-        Encode the p53 domain data. Used for the p53 dataset if the Pfam domain data is not available or not used.
+        Encode the p53 domain data. 
+        Used for the p53 dataset if the Pfam domain data is not available or not used.
     """
 
     # Encoding for remaining categorical columns
 
-    categorical_columns = ['Domain']
-    data_cleaned = pd.get_dummies(dataset, columns=categorical_columns)
+    domain_columns = ['Domain']
+    values = dataset['Domain'].unique()
+    
+    # One-hot encoding
+    data_encoded = __one_hot_encoding(dataset, domain_columns, values)
 
-    # Verify the dataset after cleaning and encoding
-    # print("\nDataset X after cleaning and encoding:")
-    # print(snv_data_cleaned.head())
-
-    return data_cleaned
+    return data_encoded
 
 
 
