@@ -198,7 +198,7 @@ class MainApp(QMainWindow):
         self.mut_dropdown.setDisabled(True)
 
         self.predict_button = QPushButton("Predici")
-        self.predict_button.clicked.connect(self.predict)
+        self.predict_button.clicked.connect(self.__predict)
         self.predict_button.setMaximumWidth(80)
         self.predict_button.setDisabled(True)
         
@@ -464,16 +464,6 @@ class MainApp(QMainWindow):
         self.predict_button.setDisabled(False)  
 
 
-    def predict(self):
-        # Placeholder 
-        position = self.position_input.text()
-        ref = "A"  # TODO: Get the reference nucleotide from the dataset
-        self.ref_nucleotide.setText(ref)
-        mutation = self.mut_dropdown.currentText()
-        self.prediction_output.append(f"Posizione: {position}, Ref: {ref}, Mut: {mutation}")
-        self.log_output.append("Predizione effettuata con successo.")
-
-
     def __update_ref_nucleotide(self):
         position = self.position_input.text()
         if position.isdigit():
@@ -539,12 +529,50 @@ class MainApp(QMainWindow):
             sbut.click()
 
 
+    # ---- Prediction Functions ---- #
+
+    def __predict(self):
+        """
+            Predict the mutation.
+            Input Data:
+                - position: The position of the mutation.
+                - ref: The reference nucleotide.
+                - mutation: The mutated nucleotide.
+            Output:
+                - The prediction of the model if successful. 
+
+        """
+        self.prediction_output.append(" ----------------- \n")
+        
+        # Get Input Data
+        position = self.position_input.text()
+        ref = self.ref_nucleotide.text()
+        mutation = self.mut_dropdown.currentText()
+
+        if not position or not ref or not mutation:
+            self.prediction_output.append("<b>Errore: Inserisci la posizione e la mutazione.</b>")
+            return
+
+
+        self.prediction_output.append(f"Predizione per:")
+        self.prediction_output.append(f"- Posizione: {position}, Ref: {ref}, Mut: {mutation}")
+        
+        # Get Prediction
+        results = self.__get_prediction(position, ref, mutation)
+        if results is None:
+            self.prediction_output.append("<b>Errore nella predizione.</b>")
+            return
+        probabilities, label = results
+        
+        self.prediction_output.append(f"<b>Predizione Modello:</b> {position}")
+        self.prediction_output.append(f"- Label mutazione predetta: {label}")
+        self.prediction_output.append(f"- Probabilità: {probabilities}")
         
 
     def __get_prediction(self, position, ref, mutation):
         if not self.model:
             return None
-        prediction = get_prediction(
+        return get_prediction(
             model_name=self.active_model, 
             model=self.model, 
             position=position, 
@@ -552,8 +580,9 @@ class MainApp(QMainWindow):
             mut=mutation, 
             sequence=self.sequence
         )
-        return prediction
         
+
+    # ---- End of Prediction Functions ---- #
         
 
 if __name__ == "__main__":
