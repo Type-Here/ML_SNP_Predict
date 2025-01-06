@@ -15,7 +15,8 @@ from src.p53_model_train import TrainingThread #TODO Generalize the TrainingThre
 #from ..src import MODELS_DIR, DATA_PATH, MODELS_STATS_DIR, PFAM_PATH
 from src.fasta.fasta_seq import get_fasta_sequence_by_model_name
 from src.models_usage import load_model_by_name, get_prediction
-from src.config import MODELS_DIR, DATA_PATH, PFAM_PATH, MODELS_STATS_DIR
+from src.config import (MODELS_DIR, DATA_PATH, PFAM_PATH, MODELS_STATS_DIR, 
+                        P53_MODEL_NAME, P53_PFAM_MODEL_NAME, HRAS_MODEL_NAME)
 
 # Set dinamically the path for QT_QPA_PLATFORM_PLUGIN_PATH
 os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = os.path.join(os.environ["CONDA_PREFIX"], "plugins", "platforms")
@@ -395,9 +396,26 @@ class MainApp(QMainWindow):
 
         if response == QMessageBox.Yes:
 
+            user_model_name = self.active_model
+            match user_model_name:
+                case "P53 Model":
+                    real_model_name = P53_MODEL_NAME
+                    pfam = False
+                case "P53 Pfam":
+                    real_model_name = P53_PFAM_MODEL_NAME
+                    pfam = True
+                case "Hras Transfer":
+                    real_model_name = HRAS_MODEL_NAME
+                    pfam = True
+                case _:
+                    text_edit.append("Modello non riconosciuto.")
+                    text_edit.append("Addestramento fallito.")
+                    self.log_output.append("Errore: Modello non riconosciuto.")
+                    return None
+
             try:
                 # Create and start the training thread
-                self.training_thread = TrainingThread()
+                self.training_thread = TrainingThread(model_name=real_model_name, set_pfam=pfam)
             except Exception as e:
                 text_edit.append(f"Error creating the training thread: {e}")
                 return
