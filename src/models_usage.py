@@ -121,6 +121,11 @@ def get_prediction(model_name:str, model:tf.keras.Model,
                     position:str, ref:str, mut:str, sequence:str, pfam:bool=False) -> tuple[float, str]:    
     """
         Get the prediction of a model.
+
+        From the user input (position, ref, mut, sequence) the function 
+        will get all the data  needed to use the model for the prediction.
+        the prediction of the model.
+
         Parameters:
             model_name: The name of the model as seen by the user.
             model: The model to use for the prediction.
@@ -135,18 +140,20 @@ def get_prediction(model_name:str, model:tf.keras.Model,
 
     match model_name:
         case "P53 Model":
-            return _p53_prediction(model, position, ref, mut, sequence)
+            return _models_prediction(model, position, ref, mut, sequence)
         case "P53 Pfam":
-            return _p53_prediction(model, position, ref, mut, sequence, pfam=True)
+            return _models_prediction(model, position, ref, mut, sequence, pfam=True)
         case "HRAS Transfer":
-            return _hras_prediction(model, position, ref, mut, sequence)
+            return _models_prediction(model, position, ref, mut, sequence, ishras=True, pfam=True)
         case _:
             return None
         
 
-def _p53_prediction(model, position, ref, mut, sequence, pfam=False, isV2 = True):
+def _models_prediction(model, position, ref, mut, sequence, pfam=False, isV2 = True,
+                    ishras = False):
     from src.p53.p53_6_model import model_predict as p53_predict # Import here to avoid circular import
     from src.p53.p53_6_model_v2 import model_predict as p53_predict_v2
+    from src.hras.hras_6_model import model_predict as hras_predict
     """
         Get the prediction of the p53 model.
         Parameters:
@@ -166,7 +173,10 @@ def _p53_prediction(model, position, ref, mut, sequence, pfam=False, isV2 = True
         codons_aa = load_codons_aa_json()
 
         # Load processed dataset
-        processed_data = load_processed_data(P53_MODEL_NAME)
+        if ishras:
+            processed_data = load_processed_data(HRAS_MODEL_NAME)
+        else:
+            processed_data = load_processed_data(P53_MODEL_NAME)
         if processed_data is None:
             return None
         
@@ -221,11 +231,16 @@ def _p53_prediction(model, position, ref, mut, sequence, pfam=False, isV2 = True
         encoded = __normalize_cdna_position(encoded, sequence)
 
         # Save the processed data
-        print("Saving processed data...")        
-        save_processed_data(encoded, 'p53_prediction_' , is_encoded=True)
+        print("Saving processed data...")    
+        if ishras:
+            save_processed_data(encoded, 'hras_prediction_' , is_encoded=True)
+        else:    
+            save_processed_data(encoded, 'p53_prediction_' , is_encoded=True)
 
         # Get the prediction
-        if isV2:
+        if ishras:
+            prob, prediction = hras_predict(model, encoded, pfam, use_P53_v2=isV2)
+        elif isV2:
             prob, prediction = p53_predict_v2(model, encoded, pfam)
         else:
             prob, prediction = p53_predict(model, encoded)
@@ -242,22 +257,6 @@ def _p53_prediction(model, position, ref, mut, sequence, pfam=False, isV2 = True
         traceback.print_exc()  # Print the traceback
         return None
 
-
-
-
-def _hras_prediction(model, position, ref, mut, sequence):
-    """
-        Get the prediction of the hras model.
-        Parameters:
-            model: The model to use for the prediction.
-            position: The position of the mutation.
-            ref: The reference amino acid.
-            mut: The mutated amino acid.
-            sequence: The protein sequence.
-        Returns:
-            The prediction of the model.
-    """
-    return None
 
 
 
