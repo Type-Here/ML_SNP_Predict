@@ -105,7 +105,7 @@ def get_model_name_from_common_name(common_name:str):
     if common_name == "P53 Model":
         return "p53_model"
     elif common_name == "P53 Pfam":
-        return "p53_pfam"
+        return "p53_pfam_model"
     elif common_name == "Hras Transfer":
         return "hras_transfer"
     else:
