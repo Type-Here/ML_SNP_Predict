@@ -7,7 +7,10 @@ import pandas as pd
 import numpy as np
 import re
 
-def hras_data_cleaning(dataset: pd.DataFrame, isPfam = False) -> pd.DataFrame:
+from src.pfam.pfam_json import get_pfam_data, create_domain_dict, assign_conservation
+from src.config import HRAS_ACCESSION, HRAS_MODEL_NAME
+
+def hras_data_clean_extract(dataset: pd.DataFrame, pfam = True) -> pd.DataFrame:
     """
     Clean the HRAS data.
     1. Filter rows to keep only SNPs.
@@ -17,12 +20,12 @@ def hras_data_cleaning(dataset: pd.DataFrame, isPfam = False) -> pd.DataFrame:
     5. Extract `Position` from `Name` column.
     6. Extract AA Ref and Mut.
     7. Drop of `Name` column as it is not useful anymore.
-    8. Add `Domain` column.
+    8. Add `Conservation` column if isPfam is True, else add `Domain` column.
     9. Rename `Germline classification` column in `Pathogenicity` for consistency.
 
     Parameters:
         dataset (pd.DataFrame): The HRAS dataset to clean.
-        isPfam (bool): If the dataset will use Pfam for Domain evaluation. Default is False.
+        isPfam (bool): If the dataset will use Pfam for Domain evaluation Score in `Conservation` column. Default is True.
 
     Returns:
         pd.DataFrame: The cleaned HRAS data.
@@ -30,10 +33,10 @@ def hras_data_cleaning(dataset: pd.DataFrame, isPfam = False) -> pd.DataFrame:
     # Data Cleaning #
 
     # Filter rows: only SNPs
-    data = __filter_rows(dataset)
+    data = __filter_rows(dataset) # Variant type: single nucleotide variant
 
     # Remove unnecessary columns
-    data = __drop_columns(data)
+    data = __drop_columns(data) # Also variant type column will be removed
 
     # Feature Selection #
 
@@ -53,11 +56,11 @@ def hras_data_cleaning(dataset: pd.DataFrame, isPfam = False) -> pd.DataFrame:
     # Drop of `Name` column as it is not useful anymore
     data = data.drop(columns=['Name'])
 
-    # Add `Domain` column
-    if isPfam:
-        #data = __assign_domain_pfam(data) #TODO: Implement Pfam Domain assignment
-        pass
+    if pfam:
+        # Add `Conservation` column
+        data = add_pfam_conservation(data)
     else:
+        # Add `Domain` column
         data = __assign_domain_basic(data)
 
     # Rename `Germline classification` column in `Pathogenicity` for consistency
@@ -85,7 +88,8 @@ def __drop_columns(data: pd.DataFrame) -> pd.DataFrame:
         'Variant type', 'Germline date last evaluated', 'Germline review status',
         'Somatic clinical impact', 'Somatic clinical impact date last evaluated',
         'Somatic clinical impact review status', 'Oncogenicity classification',
-        'Oncogenicity date last evaluated', 'Oncogenicity review status', 'Gene(s)', 'Molecular consequence'
+        'Oncogenicity date last evaluated', 'Oncogenicity review status', 'Gene(s)', 'Molecular consequence',
+        'Variant type' # After filter rows, we can remove this column
     ]
 
     # Drop Columns
@@ -177,7 +181,7 @@ def __extract_aa_ref_mut(data: pd.DataFrame) -> pd.DataFrame:
         Extract the reference and mutant amino acids from the 'Protein change' column.
     """
     # Extract wild-type and mutant amino acids
-    data[['WT_AA_1', 'Mutant_AA_1']] = data['Name'].apply(
+    data[['WT AA_1', 'Mutant AA_1']] = data['Name'].apply(
                             extract_amino_acids).apply(pd.Series)
     return data
 
@@ -234,7 +238,7 @@ def __assign_domain_by_position(row):
         Assign the functional domain based on the cDNA position.
     """
     position = row['cDNA_Position']
-    wt_aa = row['WT_AA_1']
+    wt_aa = row['WT AA_1']
 
     # Check if WT AA_1 is '0', indicating it is an intron
     if wt_aa == '0':
@@ -258,7 +262,32 @@ def __assign_domain_by_position(row):
 
 # -- End Assign Domain -- #
 
+# ----------------------------- PFAM Conservation Assignment ----------------------------- #
 
+def add_pfam_conservation(data):
+    """
+        Add the Pfam `Conservation` score to the dataset and Drop `Domain` column.
+
+        Parameters:
+            data (pd.DataFrame): The dataset to add the Pfam conservation score to.
+        Returns:
+            pd.DataFrame: The dataset with the Pfam conservation score added.
+    """
+    # Load Pfam data
+    pfam_data = get_pfam_data(HRAS_ACCESSION)
+    if pfam_data is None:
+        return data
+
+    # Create a dictionary of Pfam domains
+    domain_dict = create_domain_dict(pfam_data)
+
+    # Assign conservation score based on the position in the protein
+    data['Conservation'] = data.apply(lambda row: assign_conservation(row, domain_dict, HRAS_MODEL_NAME), axis=1)
+
+    # Drop the 'Domain' column
+    data = data.drop(columns=['Domain'], errors='ignore')
+
+    return data
 
 
 
