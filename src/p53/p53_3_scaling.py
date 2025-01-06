@@ -81,7 +81,7 @@ def __pfam_conservation_norm(data:pd.DataFrame) -> pd.DataFrame:
     """
     
     # Apply -ln(x) to the conservation data
-    data['Conservation'] = data['Conservation'].apply(lambda x: -1 * math.log(x))
+    data['Conservation'] = data['Conservation'].apply(lambda x: -1 * math.log(x) if x > 0 else x)
 
     # Apply MinMax Scaling
     max_value = 100
