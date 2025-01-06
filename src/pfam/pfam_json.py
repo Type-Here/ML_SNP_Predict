@@ -112,10 +112,14 @@ def assign_conservation(row, domain_dict, model_name):
         Returns:
             int: The conservation score.
     """
+
+    # Print all columns names
+    print(row.index)
+
     if model_name == P53_PFAM_MODEL_NAME:
         position = int(row['cDNA_Position'])
     else:
-        position = int(row["Intron"])
+        position = int(row["cDNA_Position"])
         if position == True:
             return 0  # Introns
 
