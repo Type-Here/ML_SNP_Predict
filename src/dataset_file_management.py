@@ -111,7 +111,7 @@ def __ensure_hras_data():
     if not os.path.exists(raw_path):
         raise FileNotFoundError(f"File HRAS non trovato in: {raw_path}")
 
-    return pd.read_csv(raw_path)
+    return pd.read_csv(raw_path, delimiter='\t', encoding='latin-1')
 
 
 
