@@ -3,6 +3,7 @@
     6. This module should be the sixth module in the pipeline.
 """
 
+import math
 import os
 import tensorflow as tf
 import numpy as np
@@ -21,6 +22,8 @@ N5_columns = ['WT_Codon_First', 'WT_Codon_Second', 'WT_Codon_Third',
                         'Mutant_Codon_First', 'Mutant_Codon_Second', 'Mutant_Codon_Third']
 N4_columns = ['cDNA_Ref', 'cDNA_Mut']
 AA21_columns = ['WT AA_1','Mutant AA_1']
+pfam_columns = ['cDNA_Position', 'Conservation']
+non_pfam_columns = ['cDNA_Position', 'Domain']
 
 # -------------------------------------------- TRAIN MODEL -------------------------------------------- #
 
@@ -102,6 +105,9 @@ def __add_input_layer(pfam:bool) -> tf.keras.layers.Layer:
     # Input layers for encoded columns
     for column in N5_columns + N4_columns + AA21_columns:
         input_layers.append(Input(shape=(1,), name=column + '_Encoded'))
+    
+    if not pfam:
+        input_layers.append(Input(shape=(1,), name='Domain_Encoded'))
 
     # Embedding layers
     embedding_layers = []
@@ -115,6 +121,10 @@ def __add_input_layer(pfam:bool) -> tf.keras.layers.Layer:
 
     for i, column in enumerate(AA21_columns):
         embedding = Embedding(input_dim=21, output_dim=5)(input_layers[len(N5_columns) + len(N4_columns) + i])
+        embedding_layers.append(Flatten()(embedding))
+    
+    if not pfam:
+        embedding = Embedding(input_dim=18, output_dim=8)(input_layers[-1]) # TODO: Check the number of domains
         embedding_layers.append(Flatten()(embedding))
 
     # Numerical inputs
@@ -243,3 +253,17 @@ def model_predict(model: tf.keras.Model, X: pd.DataFrame, pfam = False) -> tuple
     probabilities = model.predict(input_dict_prepare(X, pfam))
 
     return probabilities, tf.argmax(probabilities, axis=1).numpy()
+
+
+
+def __get_output_dim(in_dim:int) -> int:
+    """
+        Get the output dimension for the Embedding layer.
+        Parameters:
+            in_dim (int): The input dimension.
+        Returns:
+            int: The output dimension.
+    """
+    # Empirical formula
+    return min(50, int(math.sqrt(in_dim) * 2))
+
