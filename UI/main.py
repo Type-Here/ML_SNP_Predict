@@ -586,20 +586,25 @@ class MainApp(QMainWindow):
         probabilities, label = results
         
         self.prediction_output.append(f"<b>Predizione Modello:</b> {position}")
-        self.prediction_output.append(f"- Label mutazione predetta: <b>{label}</b>")
+        self.prediction_output.append(f"- Label mutazione predetta: <b>{label} </b>")
         self.prediction_output.append(f"- Probabilità: {probabilities}")
         
 
     def __get_prediction(self, position, ref, mutation):
+        
         if not self.model:
             return None
+        
+        use_pfam = False if self.active_model == "P53 Model" else True
+
         return get_prediction(
             model_name=self.active_model, 
             model=self.model, 
             position=position, 
             ref=ref, 
             mut=mutation, 
-            sequence=self.sequence
+            sequence=self.sequence,
+            pfam=use_pfam
         )
         
 
