@@ -8,10 +8,16 @@ import numpy as np
 import re
 
 from src.pfam.pfam_json import get_pfam_data, create_domain_dict, assign_conservation
-from src.config import HRAS_ACCESSION, HRAS_MODEL_NAME
+from src.config import HRAS_ACCESSION, HRAS_MODEL_NAME, HRAS_NM
+from src.fasta import fasta_seq 
 
-def hras_data_clean_extract(dataset: pd.DataFrame, pfam = True) -> pd.DataFrame:
+def hras_data_clean_extract(dataset: pd.DataFrame, pfam = True, email = "fia@unisa.it") -> pd.DataFrame:
     """
+    Note:
+    -----
+    This function could use EntreZ to retrieve the sequence data in FASTA format 
+    if it is not available locally. The email is required for this operation.
+
     Clean the HRAS data.
     1. Filter rows to keep only SNPs.
     2. Remove unnecessary columns.
@@ -21,11 +27,13 @@ def hras_data_clean_extract(dataset: pd.DataFrame, pfam = True) -> pd.DataFrame:
     6. Extract AA Ref and Mut.
     7. Drop of `Name` column as it is not useful anymore.
     8. Add `Conservation` column if isPfam is True, else add `Domain` column.
+    9. Impute WT and Mutant codons from the sequence data. Fasta sequence data is used for this.
     9. Rename `Germline classification` column in `Pathogenicity` for consistency.
 
     Parameters:
         dataset (pd.DataFrame): The HRAS dataset to clean.
         isPfam (bool): If the dataset will use Pfam for Domain evaluation Score in `Conservation` column. Default is True.
+        email (str): The email to use for the Fasta sequence retrieval.
 
     Returns:
         pd.DataFrame: The cleaned HRAS data.
@@ -62,6 +70,9 @@ def hras_data_clean_extract(dataset: pd.DataFrame, pfam = True) -> pd.DataFrame:
     else:
         # Add `Domain` column
         data = __assign_domain_basic(data)
+    
+    # Impute WT and Mutant codons from the sequence data
+    data = impute_codon_from_sequence(data, email)
 
     # Rename `Germline classification` column in `Pathogenicity` for consistency
     data = data.rename(columns={'Germline classification': 'Pathogenicity'})
@@ -303,3 +314,66 @@ amino_acid_map = {
     # Stop codon
     'Ter': '*'
 }
+
+
+
+
+def impute_codon_from_sequence(dataset: pd.DataFrame, email = "fia@unisa.it") -> pd.DataFrame:
+    """ 
+        Note:
+        ------
+        - `cDNA_Position` should be calculated before this function is called.
+        - `cDNA_Mut` should be calculated before this function is called.
+
+        Impute WT and Mutant codons from the sequence data.
+        Uses the `Fasta` sequence data to impute the codons retrieved locally
+        or via `Entrez` so the email is required.
+
+        Parameters:
+            dataset (pd.DataFrame): The HRAS dataset to impute the codons for.
+            email (str): The email to use for the Fasta sequence retrieval. 
+            A default email is provided for testing.
+        Returns:
+            pd.DataFrame: The dataset with the WT and Mutant codons imputed in separate columns.
+    """
+    return dataset.apply(lambda row: __impute_codon_row_from_sequence(row, email), axis=1)
+
+
+
+
+def __impute_codon_row_from_sequence(row: pd.DataFrame, email):
+    position = int(row['cDNA_Position'])
+
+    columns_to_add = ['WT_Codon_First', 'WT_Codon_Second', 'WT_Codon_Third',
+                        'Mutant_Codon_First', 'Mutant_Codon_Second', 'Mutant_Codon_Third']
+    if position < 1:
+        # Impute 'I' for intronic positions
+        for column in columns_to_add:
+            row[column] = 'I'
+        return row
+
+    # Impute WT and Mutant codons positions
+    first_pos = position - (position % 3)
+
+    # Get Sequence from Fasta
+    sequence = fasta_seq.get_fasta_sequence(HRAS_NM, email)
+
+    # Impute WT and Mutant codons
+    row['WT_Codon_First'] = sequence[first_pos] if first_pos < len(sequence) else 'I'
+    row['WT_Codon_Second'] = sequence[first_pos + 1] if first_pos + 1 < len(sequence) else 'I'
+    row['WT_Codon_Third'] = sequence[first_pos + 2] if first_pos + 2 < len(sequence) else 'I'
+
+
+    # Impute Mutant Codons
+    row['Mutant_Codon_First'] = row['WT_Codon_First'] 
+    row['Mutant_Codon_Second'] = row['WT_Codon_Second']
+    row['Mutant_Codon_Third'] = row['WT_Codon_Third']
+
+    if position % 3 == 0:
+        row['Mutant_Codon_First'] = row['cDNA_Mut']
+    elif position % 3 == 1:
+        row['Mutant_Codon_Second'] = row['cDNA_Mut']
+    else:
+        row['Mutant_Codon_Third'] = row['cDNA_Mut']
+
+    return row
