@@ -11,6 +11,7 @@ from sklearn.preprocessing import MinMaxScaler
 from src import MODELS_DIR, P53_MODEL_NAME, P53_PFAM_MODEL_NAME, HRAS_MODEL_NAME
 from src.dataset_file_management import load_codons_aa_json, load_processed_data, save_processed_data
 from src.p53.p53_2_encoding import __one_hot_encoding, p53_encoding, __ordinal_encoding
+from src.p53.p53_1_data_prep import add_pfam_conservation
 
 ## --------------------------- LOAD MODELS --------------------------- ##
 
@@ -100,7 +101,7 @@ pathogenicity_labels = {
 }
 
 def get_prediction(model_name:str, model:tf.keras.Model,
-                    position:str, ref:str, mut:str, sequence:str):
+                    position:str, ref:str, mut:str, sequence:str, pfam:bool=False) -> tuple[float, str]:    
     """
         Get the prediction of a model.
         Parameters:
@@ -110,6 +111,7 @@ def get_prediction(model_name:str, model:tf.keras.Model,
             ref: The reference amino acid.
             mut: The mutated amino acid.
             sequence: The protein sequence.
+            pfam: Whether to use a Pfam model. Default is False.
         Returns:
             The prediction of the model.
     """
@@ -127,6 +129,7 @@ def get_prediction(model_name:str, model:tf.keras.Model,
 
 def _p53_prediction(model, position, ref, mut, sequence, pfam=False, isV2 = True):
     from src.p53.p53_6_model import model_predict as p53_predict # Import here to avoid circular import
+    from src.p53.p53_6_model_v2 import model_predict as p53_predict_v2
     """
         Get the prediction of the p53 model.
         Parameters:
@@ -140,84 +143,88 @@ def _p53_prediction(model, position, ref, mut, sequence, pfam=False, isV2 = True
         Returns:
             The probability and label of the prediction. If an error occurs, None is returned.
     """
-    if pfam:
-        return None
-    else:
-        try:
-            # Load codons to amino acids mapping JSON file
-            codons_aa = load_codons_aa_json()
 
-            # Load processed dataset
-            processed_data = load_processed_data(P53_MODEL_NAME)
-            if processed_data is None:
-                return None
-            
-            position = int(position)
-            
-            # Get the codon from the sequence
-            start = position - (position % 3)
-            end = start + 3
-            codon = sequence[start:end]
-            
-            # Get the mutated codon
-            mut_codon = list(codon)
-            mut_codon[position % 3] = mut  # Replace the reference amino acid with the mutated amino acid
-            mut_codon = ''.join(mut_codon)
+    try:
+        # Load codons to amino acids mapping JSON file
+        codons_aa = load_codons_aa_json()
 
-            # Get the amino acids
-            wt_aa = __get_codon_aa_mapping(codons_aa, codon)
-            mut_aa = __get_codon_aa_mapping(codons_aa, mut_codon)
-            print(f"WT: {wt_aa} -> Mut: {mut_aa}")
+        # Load processed dataset
+        processed_data = load_processed_data(P53_MODEL_NAME)
+        if processed_data is None:
+            return None
+        
+        position = int(position)
+        
+        # Get the codon from the sequence
+        start = position - (position % 3)
+        end = start + 3
+        codon = sequence[start:end]
+        
+        # Get the mutated codon
+        mut_codon = list(codon)
+        mut_codon[position % 3] = mut  # Replace the reference amino acid with the mutated amino acid
+        mut_codon = ''.join(mut_codon)
 
-            input={}
-            input['cDNA_Position'] = position
-            input['WT_Codon_First'] = codon[0]
-            input['WT_Codon_Second'] = codon[1]
-            input['WT_Codon_Third'] = codon[2]
+        # Get the amino acids
+        wt_aa = __get_codon_aa_mapping(codons_aa, codon)
+        mut_aa = __get_codon_aa_mapping(codons_aa, mut_codon)
+        print(f"WT: {wt_aa} -> Mut: {mut_aa}")
 
-            input['Mutant_Codon_First'] = mut_codon[0]
-            input['Mutant_Codon_Second'] = mut_codon[1]
-            input['Mutant_Codon_Third'] = mut_codon[2]
+        input={}
+        input['cDNA_Position'] = position
+        input['WT_Codon_First'] = codon[0]
+        input['WT_Codon_Second'] = codon[1]
+        input['WT_Codon_Third'] = codon[2]
 
-            input['cDNA_Ref'] = ref
-            input['cDNA_Mut'] = mut
+        input['Mutant_Codon_First'] = mut_codon[0]
+        input['Mutant_Codon_Second'] = mut_codon[1]
+        input['Mutant_Codon_Third'] = mut_codon[2]
 
-            input['WT AA_1'] = wt_aa
-            input['Mutant AA_1'] = mut_aa
+        input['cDNA_Ref'] = ref
+        input['cDNA_Mut'] = mut
 
+        input['WT AA_1'] = wt_aa
+        input['Mutant AA_1'] = mut_aa
+
+        if not pfam:
             input = __get_domain_mapping(input, position, processed_data)
 
-            # Convert to DataFrame
-            pd_input = pd.DataFrame(input, index=[0])
+        # Convert to DataFrame
+        pd_input = pd.DataFrame(input, index=[0])
 
-            encoded = p53_encoding(pd_input, isPrediction=True)
-            if isV2:
-                encoded = __ordinal_encode_domain(encoded, __get_domains(processed_data))
-            else:
-                encoded = __one_hot_encode_domain(encoded, __get_domains(processed_data))
+        encoded = p53_encoding(dataset=pd_input, isPrediction=True, pfam=pfam, isV2=isV2)
+        if pfam:
+            encoded = add_pfam_conservation(encoded)
+        elif isV2:
+            encoded = __ordinal_encode_domain(encoded, __get_domains(processed_data))
+        else:
+            encoded = __one_hot_encode_domain(encoded, __get_domains(processed_data))
 
-            # Normalize the data
-            encoded = __normalize_cdna_position(encoded, sequence)
+        # Normalize the data
+        encoded = __normalize_cdna_position(encoded, sequence)
 
-            if True:
-                print(encoded)
-                save_processed_data(encoded, 'p53_prediction_' , is_encoded=True)
+        # Save the processed data
+        print("Saving processed data...")        
+        save_processed_data(encoded, 'p53_prediction_' , is_encoded=True)
 
-            # Get the prediction
+        # Get the prediction
+        if isV2:
+            prob, prediction = p53_predict_v2(model, encoded, pfam)
+        else:
             prob, prediction = p53_predict(model, encoded)
-            print(f"Prediction: {prob}, Label: {pathogenicity_labels[prediction.item()]}")
+        print(f"Prediction: {prob}, Label: {pathogenicity_labels[prediction.item()]}")
 
-            return prob, pathogenicity_labels[prediction.item()]
+        return prob, pathogenicity_labels[prediction.item()]
 
-            
-        except FileNotFoundError:
-            print("Error loading codons to amino acids JSON file.")
-            return None
-        except Exception as e:
-            print(f"Error getting prediction: {e} \n")
-            traceback.print_exc()  # Print the traceback
-            return None
-    
+        
+    except FileNotFoundError:
+        print("Error loading codons to amino acids JSON file.")
+        return None
+    except Exception as e:
+        print(f"Error getting prediction: {e} \n")
+        traceback.print_exc()  # Print the traceback
+        return None
+
 
 
 
