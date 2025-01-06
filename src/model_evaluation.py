@@ -14,6 +14,7 @@ import json
 import os
 
 from src.config import MODELS_STATS_DIR, PLOTS_SAVE_DIR
+from src.p53.p53_6_model_v2 import input_dict_prepare
 
 
 def simple_evaluate_model(model, X_test, y_test):
@@ -40,7 +41,7 @@ def simple_evaluate_model(model, X_test, y_test):
 
 
 
-def n_times_k_fold_eval(model, X_resampled, y_resampled, n_splits=5, n_repeats=5):
+def n_times_k_fold_eval(model, X_resampled, y_resampled, n_splits=5, n_repeats=5, pfam=False):
     """
         Perform n-times k-fold cross-validation on the model.
 
@@ -50,6 +51,7 @@ def n_times_k_fold_eval(model, X_resampled, y_resampled, n_splits=5, n_repeats=5
             - y_resampled: The resampled labels. All labels after encoding and balancing.
             - n_splits: The number of splits for the KFold. Default is 5. K value for KFold.
             - n_repeats: The number of times to repeat the KFold. Default is 5. N times to repeat KFold.
+            - pfam: Whether to use the Pfam data. Default is False.
     """
 
     # Cumulative metrics
@@ -67,6 +69,10 @@ def n_times_k_fold_eval(model, X_resampled, y_resampled, n_splits=5, n_repeats=5
             # Split dataset
             X_train, X_test = X_resampled.iloc[train_index], X_resampled.iloc[test_index]
             y_train, y_test = y_resampled.iloc[train_index], y_resampled.iloc[test_index]
+
+            # Prepare the data
+            X_train = input_dict_prepare(X_train, pfam)
+            X_test = input_dict_prepare(X_test, pfam)
 
             # Convert labels to one-hot encoding for training
             y_train_onehot = tf.keras.utils.to_categorical(y_train)
