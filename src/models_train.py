@@ -15,15 +15,20 @@ class TrainingThread(QThread):
     log_signal = pyqtSignal(str)  # Signal to send log messages to the main thread (GUI)
 
 
-    def __init__(self, model_name, set_pfam = False, parent=None):
+    def __init__(self, model_name, set_pfam = False, set_email = "fia@unisa.it", parent=None):
         super().__init__(parent)
         self.use_pfam = set_pfam
         self.model_name = model_name
+        self.email = set_email
 
     
     def set_use_pfam(self, set_pfam: bool):
         self.use_pfam = set_pfam
         self.log_signal.emit(f"Use Pfam: {self.use_pfam}")
+
+    def set_email(self, set_email: str):
+        self.email = set_email
+        self.log_signal.emit(f"Email: {self.email}")
 
 
     def run(self):
@@ -259,11 +264,7 @@ class TrainingThread(QThread):
             self.log_signal.emit("Preprocessing the data...")
             
             self.log_signal.emit("Cleaning the data...")
-            data = data_prep.hras_data_clean_extract(data, pfam=self.use_pfam)
-
-            # Add `Conservation` column to the dataset and drop `Domain` column
-            if self.use_pfam:
-                data = data_prep.add_pfam_conservation(data)
+            data = data_prep.hras_data_clean_extract(data, pfam=self.use_pfam, email=self.email)
 
             # Save the processed dataset (not encoded nor scaled) in CSV format
             data_save_path = save_processed_data(data, used_model_name) # Save the processed data Not Encoded nor Scaled
@@ -296,9 +297,15 @@ class TrainingThread(QThread):
             
             # Train the model
             self.log_signal.emit("Training the model...")
-            model, history = hras_model.hras_transfer_model_v2(X_train, y_train, X_test, y_test,
-                                                                original_model=from_model,
-                                                                pfam=self.use_pfam)
+            model, history = \
+                hras_model.hras_transfer_model_v2(
+                    X_train=X_train, 
+                    X_test=X_test,
+                    y_train=y_train, 
+                    y_test=y_test,
+                    original_model=from_model,
+                    pfam=self.use_pfam
+                )
     
             # Evaluate the model
             self.log_signal.emit("Evaluating the model...")
