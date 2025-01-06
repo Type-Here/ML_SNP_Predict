@@ -225,12 +225,13 @@ def retrain_model_to_save(model, X_train, y_train, pfam = False) -> tuple[tf.ker
 # -------------------------------------------- PREDICT -------------------------------------------- #
 
 
-def model_predict(model: tf.keras.Model, X: pd.DataFrame) -> tuple[tf.Tensor, np.ndarray]:
+def model_predict(model: tf.keras.Model, X: pd.DataFrame, pfam = False) -> tuple[tf.Tensor, np.ndarray]:
     """
         Predict the labels for the given features.
         Parameters:
             model: The trained model.
             X: The features to predict.
+            pfam: If True, the model will be trained with Pfam data. Default is False.
         Returns:
             Predicted probabilities: as a Tensor
             Predicted labels: as a numpy array of indexes
@@ -239,6 +240,6 @@ def model_predict(model: tf.keras.Model, X: pd.DataFrame) -> tuple[tf.Tensor, np
     #X_tensor = tf.convert_to_tensor(X.values, dtype=tf.float32)
 
     # Predict Probabilities
-    probabilities = model.predict(input_dict_prepare(X))
+    probabilities = model.predict(input_dict_prepare(X, pfam))
 
     return probabilities, tf.argmax(probabilities, axis=1).numpy()
