@@ -14,7 +14,7 @@ from keras.api.layers import Dense, Dropout, Input
 from src import MODELS_DIR, P53_MODEL_NAME
 from src.models_usage import save_model as general_save_model
 
-def p53_train_model(X_train, y_train, X_test, y_test) -> tuple[tf.keras.Model, tf.keras.callbacks.History]:
+def p53_train_model(X_train, y_train, X_test, y_test, pfam = False) -> tuple[tf.keras.Model, tf.keras.callbacks.History]:
     """
         Create and train the p53 MLP model.
         Model architecture:
@@ -32,6 +32,7 @@ def p53_train_model(X_train, y_train, X_test, y_test) -> tuple[tf.keras.Model, t
             y_train: The training labels.
             X_test: The test features.
             y_test: The test labels.
+            pfam: If True, the model will be trained with Pfam data. Default is False.
         Returns:
             The trained model and the training history.
     """
@@ -89,11 +90,17 @@ def save_model(model: tf.keras.Model, name: str = P53_MODEL_NAME):
     return general_save_model(model, name)
 
 
-def retrain_model_to_save(model, X_train, y_train) -> tuple[tf.keras.Model, tf.keras.callbacks.History]:
+def retrain_model_to_save(model, X_train, y_train, pfam = False) -> tuple[tf.keras.Model, tf.keras.callbacks.History]:
     """
         Train a model with all the given data in order to save it.
         It does not split the data into training and test sets.
         It doesn't save the model.
+
+        Parameters:
+            model: The model to train.
+            X_train: The training features.
+            y_train: The training labels.
+            pfam: If True, the model will be trained with Pfam data. Default is False.
         Returns:
             The trained model and the training history.
     """
