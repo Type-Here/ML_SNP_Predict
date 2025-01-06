@@ -7,7 +7,8 @@ import pandas as pd
 import numpy as np
 import re
 
-def hras_data_encoding(dataset: pd.DataFrame, isPfam = False) -> pd.DataFrame:
+def hras_data_encoding(dataset: pd.DataFrame, pfam = True, 
+                       isPrediction = False, use_P53_V2 = True) -> pd.DataFrame:
     """
     Encode the HRAS data.
     1. Encode the `AA Ref` and `AA Mut` columns.
@@ -17,7 +18,9 @@ def hras_data_encoding(dataset: pd.DataFrame, isPfam = False) -> pd.DataFrame:
 
     Parameters:
         dataset (pd.DataFrame): The HRAS dataset to encode.
-        isPfam (bool): If the dataset will use Pfam for Domain evaluation. Default is False.
+        pfam (bool): If the dataset will use Pfam for Domain evaluation. Default is True
+        isPrediction (bool): If the data is for prediction. Default is False.
+        use_P53_V2 (bool): If the V2 P53 Model will be used for Transfer Learning. Default is True.
 
     Returns:
         pd.DataFrame: The encoded HRAS data.
@@ -25,18 +28,21 @@ def hras_data_encoding(dataset: pd.DataFrame, isPfam = False) -> pd.DataFrame:
     # Encoding #
     
     # Encode the `AA Ref` and `AA Mut` columns
-    dataset = __encode_aa(dataset)
+    dataset = __encode_aa(dataset, use_P53_V2)
     
     # Encode the `cDNA Ref` and `cDNA Mut` columns
-    dataset = __encode_cdna(dataset)
+    dataset = __encode_cdna(dataset, use_P53_V2)
     
     # Encode the `Domain` column
-    if isPfam:
+    if pfam:
         # Encode the `Domain` column using Pfam
         #dataset = __encode_domain_pfam(dataset) #TODO: Implement Pfam Domain assignment
         pass
     else:
-        dataset = __encode_domain_basic(dataset)
+        dataset = __encode_domain_basic(dataset, use_P53_V2)
+    
+    if isPrediction:
+        return dataset
     
     # Encode the `Pathogenicity` column
     dataset = __encode_pathogenicity(dataset)
@@ -46,6 +52,7 @@ def hras_data_encoding(dataset: pd.DataFrame, isPfam = False) -> pd.DataFrame:
     
     return dataset
 
+# ------------------------- One-Hot Encoding ------------------------- #
 
 def __one_hot_encode(data: pd.DataFrame, columns_to_encode: list, valid_categories: list) -> pd.DataFrame:
     """
@@ -83,12 +90,41 @@ def __one_hot_encode(data: pd.DataFrame, columns_to_encode: list, valid_categori
     return data_replaced
 
 
-def __encode_cdna(dataset: pd.DataFrame) -> pd.DataFrame:
+# ------------------------- Ordinal Encoding ------------------------- #
+
+def __ordinal_encoding(dataset, columns_to_encode, categories):
+    """
+        Encode the specified columns using ordinal encoding.
+        The categories are mapped to integer values.
+
+        Parameters:
+            dataset (pd.DataFrame): The DataFrame containing the data to be encoded.
+            columns_to_encode (list): The list of columns to be encoded.
+            categories (list): The list of valid categories for each column to be encoded.
+        Returns:
+            pd.DataFrame: The DataFrame containing the encoded data.
+    """
+    cat_mapping = {v: i for i, v in enumerate(categories)}
+
+    for col in columns_to_encode:
+        dataset[col + "_Encoded"] = dataset[col].map(cat_mapping)
+    
+    # Drop original columns
+    dataset = dataset.drop(columns=columns_to_encode)
+
+    return dataset
+
+
+# ------------------------- Column Encoding Functions ------------------------- #
+
+
+def __encode_cdna(dataset: pd.DataFrame, use_P53_V2: bool) -> pd.DataFrame:
     """
     Encode the `cDNA Ref` and `cDNA Mut` columns.
 
     Parameters:
         dataset (pd.DataFrame): The HRAS dataset to encode.
+        use_P53_V2 (bool): If the V2 P53 Model will be used for Transfer Learning.
 
     Returns:
         pd.DataFrame: The HRAS dataset with encoded `cDNA Ref` and `cDNA Mut` columns.
@@ -97,17 +133,21 @@ def __encode_cdna(dataset: pd.DataFrame) -> pd.DataFrame:
     # Combine columns to encode
     columns_to_encode = ['cDNA_Ref', 'cDNA_Mut']
 
+    if use_P53_V2:
+        return __ordinal_encoding(dataset, columns_to_encode, nucleotide_categories)
+
     return __one_hot_encode(dataset, columns_to_encode, nucleotide_categories)
 
 
 # -- Start of AA Encoding -- #
 
-def __encode_aa(data: pd.DataFrame) -> pd.DataFrame:
+def __encode_aa(dataset: pd.DataFrame, use_P53_V2:bool) -> pd.DataFrame:
     """
     Encode the `AA Ref` and `AA Mut` columns.
 
     Parameters:
         dataset (pd.DataFrame): The HRAS dataset to encode.
+        use_P53_V2 (bool): If the V2 P53 Model will be used for Transfer Learning.
 
     Returns:
         pd.DataFrame: The HRAS dataset with encoded `AA Ref` and `AA Mut` columns.
@@ -115,12 +155,15 @@ def __encode_aa(data: pd.DataFrame) -> pd.DataFrame:
     aa_categories = ['G','A','V','L','I','T','S','M','C','P','F','Y','W','H','K','R','D','E','N','Q','0']
 
     # Combine columns to encode
-    columns_to_encode = ['WT_AA_1','Mutant_AA_1']
+    columns_to_encode = ['WT AA_1','Mutant AA_1']
 
     for v in columns_to_encode:
-        data[v] = data[v].apply(__clean_amino_acids_introns)
+        dataset[v] = dataset[v].apply(__clean_amino_acids_introns)
     
-    return __one_hot_encode(data, columns_to_encode, aa_categories)
+    if use_P53_V2:
+        return __ordinal_encoding(dataset, columns_to_encode, aa_categories)
+    
+    return __one_hot_encode(dataset, columns_to_encode, aa_categories)
 
 
 def __clean_amino_acids_introns(variant):
@@ -134,19 +177,24 @@ def __clean_amino_acids_introns(variant):
 # -- End of AA Encoding -- #
 
 
-def __encode_domain_basic(data: pd.DataFrame) -> pd.DataFrame:
+def __encode_domain_basic(dataset: pd.DataFrame, use_P53_V2: bool) -> pd.DataFrame:
     """
         Encode the `Domain` column using basic domain assignment.
-        Uses pd.get_dummies() for encoding.
+        Uses one-hot encoding for the `Domain` column.
 
         Parameters:
             data (pd.DataFrame): The dataset to encode.
+            use_P53_V2 (bool): If the V2 P53 Model will be used for Transfer Learning.
         Returns:
             pd.DataFrame: The dataset with the `Domain` column encoded.    
     """
     # Encoding for remaining categorical columns
     categorical_columns = ['Domain']
-    data = pd.get_dummies(data, columns=categorical_columns)
+
+    if use_P53_V2:
+        return __ordinal_encoding(dataset, categorical_columns, dataset['Domain'].unique())
+
+    return __one_hot_encode(dataset, categorical_columns, dataset['Domain'].unique())
 
 
 def __check_non_numeric(data):
