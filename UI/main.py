@@ -1,4 +1,9 @@
+import asyncio
 import sys
+import os
+
+from qasync import QEventLoop
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, 
     QLabel, QPushButton, QComboBox, QLineEdit, QTextEdit, QSpacerItem, QSizePolicy, QAction, 
@@ -6,20 +11,25 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt, QRegExp
 from PyQt5.QtGui import QIntValidator, QRegExpValidator, QIcon, QPixmap
+from biopy.protein_3d import add_protein_3d_view
 
-import os
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.models_train import TrainingThread #TODO Generalize the TrainingThread to be used for all models
 
 #from ..src import MODELS_DIR, DATA_PATH, MODELS_STATS_DIR, PFAM_PATH
 from src.fasta.fasta_seq import get_fasta_sequence_by_model_name
 from src.models_usage import load_model_by_name, get_prediction
 from src.config import (MODELS_DIR, DATA_PATH, PFAM_PATH, MODELS_STATS_DIR, 
-                        P53_MODEL_NAME, P53_PFAM_MODEL_NAME, HRAS_MODEL_NAME)
+                        P53_MODEL_NAME, P53_PFAM_MODEL_NAME, HRAS_MODEL_NAME,
+                        P53_PDB, HRAS_PDB)
 
 # Set dinamically the path for QT_QPA_PLATFORM_PLUGIN_PATH
 os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = os.path.join(os.environ["CONDA_PREFIX"], "plugins", "platforms")
+os.environ["LD_LIBRARY_PATH"] = os.path.join(os.environ["CONDA_PREFIX"], "lib") + ":" + os.environ.get("LD_LIBRARY_PATH", "")
+os.environ["QTWEBENGINEPROCESS_PATH"] = os.path.join(os.environ["CONDA_PREFIX"], "libexec", "QtWebEngineProcess")
+
+
+
 if sys.platform == "linux":
     os.environ["QT_QPA_PLATFORM"] = "xcb"  # Fix for Linux: Could not find a Qt installation of ''; Force to use xcb
 
@@ -170,7 +180,7 @@ class MainApp(QMainWindow):
         self.model_dropdown.addItems(["P53 Model", "P53 Pfam", "HRAS Transfer"]) 
         self.load_model_button = QPushButton("Carica")
         self.load_model_button.setMaximumWidth(80)
-        self.load_model_button.clicked.connect(self.load_model)
+        self.load_model_button.clicked.connect(self.load_model_clicked)
         model_layout.addWidget(model_label)
         model_layout.addWidget(self.model_dropdown)
         model_layout.addWidget(self.load_model_button)
@@ -441,11 +451,20 @@ class MainApp(QMainWindow):
 
     # ---- Operative Functions ---- #
 
-    def load_model(self):
+    def load_model_clicked(self):
+        asyncio.create_task(self.load_model())
+
+    async def load_model(self):
+        """
+            Load the selected model and the DNA sequence.
+        """
         # Get User Input
         self.prediction_output.clear()
         self.active_model = self.model_dropdown.currentText()
         self.email = self.email_input.text()
+
+        # Async Load BioPython 3D
+        asyncio.create_task(self.__load_biopython_3d())
 
         # Check if email is valid
         if not self.email_input.hasAcceptableInput():
@@ -609,10 +628,43 @@ class MainApp(QMainWindow):
         
 
     # ---- End of Prediction Functions ---- #
+
+
+    # ---- Biopython 3D Functions ---- #
+
+    async def __load_biopython_3d(self):
+        """
+            Load the Biopython 3D viewer.
+        """
+        # Clear the Biopython 3D layout
+        bio_layout = self.findChild(QFrame, "biopython_frame").layout()
+        self.__clear_layout(bio_layout)
+
+        if self.active_model == "P53 Model":
+            pdb_code = P53_PDB
+        elif self.active_model == "P53 Pfam":
+            pdb_code = P53_PDB
+        elif self.active_model == "HRAS Transfer":
+            pdb_code = HRAS_PDB
+        else:
+            pdb_code = None
+
+        # Load the Biopython 3D viewer
+        add_protein_3d_view(bio_layout, text_edit=self.log_output, pdb_code=pdb_code)
         
+
+#if __name__ == "__main__":
+#    app = QApplication(sys.argv)
+#    main_window = MainApp()
+# main_window.show()
+#     sys.exit(app.exec_())
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    main_window = MainApp()
-    main_window.show()
-    sys.exit(app.exec_())
+    loop = QEventLoop(app)
+    asyncio.set_event_loop(loop)
+    
+    with loop:
+        main_window = MainApp()
+        main_window.show()
+        loop.run_forever()
