@@ -4,7 +4,7 @@
 
 import requests
 import json
-from src.config import PFAM_PATH
+from src.config import PFAM_PATH, P53_MODEL_NAME, HRAS_MODEL_NAME, P53_PFAM_MODEL_NAME
 
 # ------------------ Functions to get Pfam data ------------------ #
 
@@ -102,18 +102,22 @@ def create_domain_dict(pfam_data):
 
 
 # Function to assign domain and conseravtion value
-def assign_conservation(row, domain_dict):
+def assign_conservation(row, domain_dict, model_name):
     """
         Assign a conservation score based on the position in the protein.
         Parameters:
             row (pd.Series): The row of the DataFrame.
             domain_dict (list[dict]): A list of dictionaries containing the domain information.
+            model_name (str): The name of the model.
         Returns:
             int: The conservation score.
     """
-    position = row["Intron"]
-    if position == True:
-        return 0  # Introns
+    if model_name == P53_PFAM_MODEL_NAME:
+        position = int(row['cDNA_Position'])
+    else:
+        position = int(row["Intron"])
+        if position == True:
+            return 0  # Introns
 
     for map in domain_dict:
         start, end, score = map["start"]*3, map["end"]*3, map["score"]
