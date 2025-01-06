@@ -114,7 +114,7 @@ def assign_conservation(row, domain_dict, model_name):
     """
 
     # Print all columns names
-    print(row.index)
+    #print(row.index)
 
     if model_name == P53_PFAM_MODEL_NAME:
         position = int(row['cDNA_Position'])

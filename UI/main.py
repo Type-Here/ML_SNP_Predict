@@ -10,7 +10,7 @@ from PyQt5.QtGui import QIntValidator, QRegExpValidator, QIcon, QPixmap
 import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from src.p53_model_train import TrainingThread #TODO Generalize the TrainingThread to be used for all models
+from src.models_train import TrainingThread #TODO Generalize the TrainingThread to be used for all models
 
 #from ..src import MODELS_DIR, DATA_PATH, MODELS_STATS_DIR, PFAM_PATH
 from src.fasta.fasta_seq import get_fasta_sequence_by_model_name
