@@ -13,8 +13,9 @@ def hras_data_encoding(dataset: pd.DataFrame, pfam = True,
     Encode the HRAS data.
     1. Encode the `AA Ref` and `AA Mut` columns.
     2. Encode the `cDNA Ref` and `cDNA Mut` columns.
-    3. Encode the `Domain` column.
-    4. Encode the `Pathogenicity` column.
+    3. Encode the WT and Mutant Codons.
+    4. Encode the `Domain` column. (If Pfam is False)
+    5. Encode the `Pathogenicity` column. (If isPrediction is False)
 
     Parameters:
         dataset (pd.DataFrame): The HRAS dataset to encode.
@@ -32,17 +33,17 @@ def hras_data_encoding(dataset: pd.DataFrame, pfam = True,
     
     # Encode the `cDNA Ref` and `cDNA Mut` columns
     dataset = __encode_cdna(dataset, use_P53_V2)
-    
-    # Encode the `Domain` column
-    if pfam:
-        # Encode the `Domain` column using Pfam
-        #dataset = __encode_domain_pfam(dataset) #TODO: Implement Pfam Domain assignment
-        pass
-    else:
-        dataset = __encode_domain_basic(dataset, use_P53_V2)
+
+    # Encode WT and Mutant Codons
+    dataset = __wt_mut_nucleotide_encoding(dataset, use_P53_V2)
     
     if isPrediction:
         return dataset
+    
+    elif not pfam:
+        # Encode the `Domain` column
+        dataset = __encode_domain_basic(dataset, use_P53_V2)
+    
     
     # Encode the `Pathogenicity` column
     dataset = __encode_pathogenicity(dataset)
@@ -176,6 +177,38 @@ def __clean_amino_acids_introns(variant):
     
 # -- End of AA Encoding -- #
 
+# ------------------------- Codon Encoding ------------------------- #
+
+def __wt_mut_nucleotide_encoding(dataset, use_P53_V2 = True):
+    """
+        Encode the nucleotide data for the wild-type and mutant splitted codons.
+    """   
+    # Define nucleotide values
+    nucleotide_categories = ['A', 'T', 'C', 'G', 'I'] # 'I' is for Intronic Sequences modified to output III in some rows
+
+     # Columns to encode
+    columns_to_encode = ['WT_Codon_First', 'WT_Codon_Second', 'WT_Codon_Third',
+                        'Mutant_Codon_First', 'Mutant_Codon_Second', 'Mutant_Codon_Third']
+
+    if use_P53_V2:
+        # Ordinal encoding
+        data = __ordinal_encoding(dataset, columns_to_encode, nucleotide_categories)
+    else:
+        # One-hot encoding
+        data = __one_hot_encode(dataset, columns_to_encode, nucleotide_categories)
+
+    # Drop now unnecessary columns -
+    # HRAS shouldn't have these columns but control is added for future changes
+    columns_to_drop = [
+        'Codon', 'WT_Codon', 'Mutant_Codon'
+    ]
+
+    data_cleaned = data.drop(columns=columns_to_drop, errors='ignore')
+
+    return data_cleaned
+
+# ------------------------- Domain Encoding ------------------------- #
+
 
 def __encode_domain_basic(dataset: pd.DataFrame, use_P53_V2: bool) -> pd.DataFrame:
     """
@@ -197,23 +230,7 @@ def __encode_domain_basic(dataset: pd.DataFrame, use_P53_V2: bool) -> pd.DataFra
     return __one_hot_encode(dataset, categorical_columns, dataset['Domain'].unique())
 
 
-def __check_non_numeric(data):
-    """
-        Check the non-numeric columns in the dataset.
-        Parameters:
-            data (pd.DataFrame): The dataset to check.
-        Prints:
-            The non-numeric columns in the dataset.
-    """
-    # Check the data types of the features
-    print("\nFeature types in Dataset:")
-    print(data.dtypes)
-
-    # Identify non-numeric columns
-    non_numeric_columns = data.select_dtypes(include=['object']).columns
-    print("\nNon-numeric columns in Dataset:")
-    print(non_numeric_columns)
-
+# ------------------------- Pathogenicity Encoding ------------------------- #
 
 
 def __encode_pathogenicity(data: pd.DataFrame) -> pd.DataFrame:
@@ -247,6 +264,8 @@ def __encode_pathogenicity(data: pd.DataFrame) -> pd.DataFrame:
     return data
 
 
+# ------------------------- Utility Functions ------------------------- #
+
 def __check_for_null_path_after_enc(data):
     """
         Check for NaN values in the 'Pathogenicity' column after encoding.
@@ -266,3 +285,22 @@ def __check_for_null_path_after_enc(data):
     # Verify class distribution after cleaning
     print("\nUpdated class distribution in 'Pathogenicity':")
     print(data['Pathogenicity'].value_counts())
+
+
+def __check_non_numeric(data):
+    """
+        Check the non-numeric columns in the dataset.
+        Parameters:
+            data (pd.DataFrame): The dataset to check.
+        Prints:
+            The non-numeric columns in the dataset.
+    """
+    # Check the data types of the features
+    print("\nFeature types in Dataset:")
+    print(data.dtypes)
+
+    # Identify non-numeric columns
+    non_numeric_columns = data.select_dtypes(include=['object']).columns
+    print("\nNon-numeric columns in Dataset:")
+    print(non_numeric_columns)
+
