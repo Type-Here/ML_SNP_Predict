@@ -7,6 +7,8 @@ import pandas as pd
 import numpy as np
 import re
 
+from src.pfam.pfam_json import get_pfam_data, create_domain_dict, assign_conservation
+from src.config import P53_ACCESSION, P53_MODEL_NAME, P53_PFAM_MODEL_NAME
 
 def p53_cleaning(dataset: pd.DataFrame, pfam: bool = False) -> pd.DataFrame:
     if dataset.empty:
@@ -14,7 +16,7 @@ def p53_cleaning(dataset: pd.DataFrame, pfam: bool = False) -> pd.DataFrame:
     
     data = _filter_by_snp(dataset)
     data = _drop_columns(data)
-    data = _nan_handling(data, pfam)
+    data = _nan_handling(data, pfam) # Calls _domain_imputation if pfam is False
     data = _data_treatment(data)
     data = _feature_derivation(data)
 
@@ -105,7 +107,7 @@ def _nan_handling(data, pfam):
 
 
     if pfam:
-        print("\nHandling NaN values in Pfam columns...") # TODO: Implement Pfam handling
+        print("\nSkipping 'Domain' imputation for Pfam data.")
     else:
         snp_data_cleaned = _domain_imputation(snp_data_cleaned)
 
@@ -337,3 +339,32 @@ def _ref_and_mut_from_cDNA_Variant(data):
 
 # -----------------  End of Feature Derivation Functions ----------------- #
 
+
+# ----------------------------------------- PFAM FUNCTIONS ----------------------------------------- #   
+
+# -----------------   ADD PFAM CONSERVATION COLUMN ----------------- #
+
+def add_pfam_conservation(data):
+    """
+        Add the Pfam `Conservation` score to the dataset and Drop `Domain` column.
+
+        Parameters:
+            data (pd.DataFrame): The dataset to add the Pfam conservation score to.
+        Returns:
+            pd.DataFrame: The dataset with the Pfam conservation score added.
+    """
+    # Load Pfam data
+    pfam_data = get_pfam_data(P53_ACCESSION)
+    if pfam_data is None:
+        return data
+
+    # Create a dictionary of Pfam domains
+    domain_dict = create_domain_dict(pfam_data)
+
+    # Assign conservation score based on the position in the protein
+    data['Conservation'] = data.apply(lambda row: assign_conservation(row, domain_dict, P53_PFAM_MODEL_NAME), axis=1)
+
+    # Drop the 'Domain' column
+    data = data.drop(columns=['Domain'], errors='ignore')
+
+    return data
