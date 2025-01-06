@@ -41,12 +41,10 @@ def p53_encoding(dataset:pd.DataFrame, pfam:bool = False, isPrediction = False, 
     data_encoded = _amino_acid_encoding(data_encoded, isV2)
     print("Amino acid encoding done")
 
-    if pfam:
-        # Skip Domain encoding if Pfam data is used
-        pass
-    elif isPrediction:
+    if isPrediction:
         return data_encoded
-    else:
+    elif not pfam:
+        # Skip Domain encoding if Pfam data is used
         data_encoded = _p53_domain_encoding(data_encoded, isV2)
     
     print("p53 domain encoding done")
