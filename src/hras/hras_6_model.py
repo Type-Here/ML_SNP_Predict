@@ -95,6 +95,8 @@ def hras_transfer_model_v2(X_train, X_test, y_train, y_test,
      # Freeze all layers except the last one
     for layer in original_model.layers[:-1]:
         layer.trainable = False
+    for layer in original_model.layers[-2:]:
+        layer.trainable = True # Unfreeze the last two layers
 
     # Replace the output layer
     x = original_model.layers[-2].output  # Take the output of the second-to-last layer
@@ -105,7 +107,7 @@ def hras_transfer_model_v2(X_train, X_test, y_train, y_test,
 
     # Compile the new model
     new_model.compile(
-        optimizer=tf.keras.optimizers.Adam(learning_rate=0.005), # TODO: Check learning rate
+        optimizer=tf.keras.optimizers.Adam(learning_rate=0.010), # TODO: Check learning rate
         loss='categorical_crossentropy',
         metrics=['accuracy']
     )
@@ -119,7 +121,7 @@ def hras_transfer_model_v2(X_train, X_test, y_train, y_test,
         x=X_train_dict,
         y=tf.keras.utils.to_categorical(y_train),
         validation_data=(X_test_dict, tf.keras.utils.to_categorical(y_test)),
-        epochs=30,
+        epochs=50,
         batch_size=16,
         verbose=1,
         callbacks=[__early_stopping()]
@@ -132,7 +134,8 @@ def hras_transfer_model_v2(X_train, X_test, y_train, y_test,
 
 
 def retrain_hras_model_to_save(X_train, y_train, model, 
-                               use_P53_v2 = True, pfam = True) -> tf.keras.Model:
+                               use_P53_v2 = True, pfam = True) -> \
+                    tuple[tf.keras.Model, tf.keras.callbacks.History]:
     """
         Retrain the HRAS model with the full dataset in order to save it.
         Parameters:
@@ -142,7 +145,7 @@ def retrain_hras_model_to_save(X_train, y_train, model,
             use_P53_v2: If True, the model is trained from P53 V2 Model. Default is True.
             pfam: If True, the model will be trained with Pfam data. Default is True.
         Returns:
-            The retrained model.
+            The retrained model and the training history.
     """
 
     model.compile(
@@ -155,16 +158,16 @@ def retrain_hras_model_to_save(X_train, y_train, model,
         X_train = input_dict_prepare(X_train, pfam)
 
 
-    model.fit(
+    history = model.fit(
         x=X_train, 
         y=tf.keras.utils.to_categorical(y_train),
-        epochs=30,
+        epochs=50,
         batch_size=16,
         verbose=1,
         callbacks=[__early_stopping()]
     )
 
-    return model
+    return model, history
 
 
 
@@ -203,8 +206,8 @@ def __early_stopping():
             The EarlyStopping callback.
     """
     return EarlyStopping(
-    monitor='val_loss',  # (ex. val_loss or val_accuracy)
-    patience=5,         # Number of epochs with no improvement after which training will be stopped
+    monitor='loss',  # (ex. loss or accuracy)
+    patience=10,         # Number of epochs with no improvement after which training will be stopped
     restore_best_weights=True  # Restore model weights from the epoch with the best value of the monitored quantity
 )
 
@@ -235,7 +238,7 @@ def save_model(model: tf.keras.Model, name: str = HRAS_MODEL_NAME):
 
 
 def model_predict(model: tf.keras.Model, X: pd.DataFrame, pfam = False, 
-                  use_P53_v2 = False) -> tuple[tf.Tensor, np.ndarray]:
+                  use_P53_v2 = True) -> tuple[tf.Tensor, np.ndarray]:
     """
         Predict the labels for the given features.
         Parameters:
