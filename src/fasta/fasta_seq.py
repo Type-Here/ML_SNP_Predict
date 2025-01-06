@@ -19,7 +19,7 @@ def get_fasta_sequence_by_model_name(name:str, email:str):
             nm_code = P53_NM
         case "P53 Pfam":
             nm_code = P53_NM
-        case "Hras Transfer":
+        case "HRAS Transfer":
             nm_code = HRAS_NM
         case _:
             return None

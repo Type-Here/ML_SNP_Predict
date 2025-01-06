@@ -404,7 +404,7 @@ class MainApp(QMainWindow):
                 case "P53 Pfam":
                     real_model_name = P53_PFAM_MODEL_NAME
                     pfam = True
-                case "Hras Transfer":
+                case "HRAS Transfer":
                     real_model_name = HRAS_MODEL_NAME
                     pfam = True
                 case _:

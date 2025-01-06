@@ -29,7 +29,7 @@ def load_model_by_name(name: str) -> tf.keras.Model:
             model_name = P53_MODEL_NAME
         case "P53 Pfam":
             model_name = P53_PFAM_MODEL_NAME
-        case "Hras Transfer":
+        case "HRAS Transfer":
             model_name = HRAS_MODEL_NAME
         case _:
             return None
@@ -43,6 +43,23 @@ def load_model_by_name(name: str) -> tf.keras.Model:
     else:
         return None
     
+
+def load_model_by_real_name(real_model_name: str) -> tf.keras.Model:
+    """
+        Load a model by real name.
+        Parameters:
+            real_model_name: The name of the model as named in the file. (Real name of the model)
+        Returns:
+            tf.keras.Model: The loaded model.
+    """ 
+    if os.path.exists(f"{MODELS_DIR}/{real_model_name}.keras"):
+        model = tf.keras.models.load_model(f"{MODELS_DIR}/{real_model_name}.keras")
+        model.trainable = False
+        model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+
+        return model
+    else:
+        return None
 
 ## --------------------------- SAVE MODELS --------------------------- ##
 
@@ -121,7 +138,7 @@ def get_prediction(model_name:str, model:tf.keras.Model,
             return _p53_prediction(model, position, ref, mut, sequence)
         case "P53 Pfam":
             return _p53_prediction(model, position, ref, mut, sequence, pfam=True)
-        case "Hras Transfer":
+        case "HRAS Transfer":
             return _hras_prediction(model, position, ref, mut, sequence)
         case _:
             return None
