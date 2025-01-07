@@ -175,6 +175,8 @@ def _models_prediction(model, position, ref, mut, sequence, pfam=False, isV2 = T
         # Load processed dataset
         if ishras:
             processed_data = load_processed_data(HRAS_MODEL_NAME)
+        elif pfam:
+            processed_data = load_processed_data(P53_PFAM_MODEL_NAME)
         else:
             processed_data = load_processed_data(P53_MODEL_NAME)
         if processed_data is None:
@@ -249,8 +251,8 @@ def _models_prediction(model, position, ref, mut, sequence, pfam=False, isV2 = T
         return prob, pathogenicity_labels[prediction.item()]
 
         
-    except FileNotFoundError:
-        print("Error loading codons to amino acids JSON file.")
+    except FileNotFoundError as ex:
+        print(f"Error loading: {ex}")
         return None
     except Exception as e:
         print(f"Error getting prediction: {e} \n")
