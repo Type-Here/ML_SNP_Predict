@@ -175,6 +175,7 @@ def input_dict_prepare(X: pd.DataFrame, pfam=False) -> dict:
         X_dict['Position and Conservation'] = X[['cDNA_Position', 'Conservation']].to_numpy()
     else:
         X_dict['cDNA_Position'] = X['cDNA_Position'].to_numpy()
+        X_dict['Domain_Encoded'] = X['Domain_Encoded'].to_numpy()
     
     return X_dict
 
