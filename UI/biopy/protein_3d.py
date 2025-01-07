@@ -8,8 +8,7 @@ from Bio.PDB import PDBList
 from PyQt5 import Qt
 from PyQt5.QtCore import QUrl
 
-from src.config import PFAM_PATH, P53_PDB, HRAS_PDB, HTML_NGL_PATH
-
+from src.config import PFAM_PATH, P53_PDB, HRAS_PDB
 
 def add_protein_3d_view(biopy_layout:QVBoxLayout, text_edit:QTextEdit, pdb_code = P53_PDB):
     # Get the PDB file path
