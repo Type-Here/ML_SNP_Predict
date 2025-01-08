@@ -1,6 +1,7 @@
 import os
 import tempfile
 import subprocess
+import platform
 
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QVBoxLayout, QFrame, QTextEdit, QLabel, QWidget
@@ -82,6 +83,8 @@ def __download_pdb(pdb_code, text_edit):
 # -------------------------------------------- PYMOL -------------------------------------------- #
 
 def generate_pymol_image(pdb_file, output_image):
+    pdb_file = os.path.abspath(pdb_file)
+
     pymol_script = f"""
     load {pdb_file}
     show cartoon
@@ -91,7 +94,22 @@ def generate_pymol_image(pdb_file, output_image):
     """
     with open("pymol_script.pml", "w") as script_file:
         script_file.write(pymol_script)
-    subprocess.run(["pymol", "-cq", "pymol_script.pml"])
+    script_p = os.path.abspath("pymol_script.pml")
+    pymol = __get_pymol_executable()
+    subprocess.run([pymol, "-cq", script_p])
+
+
+def __get_pymol_executable():
+    if platform.system() == "Windows":
+        conda_prefix = os.environ.get("CONDA_PREFIX", "")
+        pymol_path = os.path.join(conda_prefix, "Scripts", "pymol.bat")
+        if os.path.exists(pymol_path):
+            return pymol_path
+        else:
+            raise FileNotFoundError(f"PyMOL executable not found at: {pymol_path}")
+    else:
+        # On other systems, just use 'pymol' (assuming it's in PATH)
+        return "pymol"
 
 
     # -------------------------------------------- CLASS ProteinViewer -------------------------------------------- #
