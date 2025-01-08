@@ -2,17 +2,26 @@ import os
 
 
 # Global variables
+# Base directory (assoluto e normalizzato)
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
 # Data directory path
-DATA_PATH = os.path.join(os.path.dirname(__file__), '../data/')
+DATA_PATH = os.path.normpath(os.path.join(BASE_DIR, 'data'))
+
 # Fasta files directory path
-FASTA_PATH = os.path.join(os.path.dirname(__file__), '../data/sequences/')
+FASTA_PATH = os.path.normpath(os.path.join(DATA_PATH, 'sequences'))
+
 # Pfam directory path
-PFAM_PATH = os.path.join(os.path.dirname(__file__), '../data/protein/')
+PFAM_PATH = os.path.normpath(os.path.join(DATA_PATH, 'protein'))
+
 # Models directory path
-MODELS_DIR = os.path.join(os.path.dirname(__file__), '../models/')
-MODELS_STATS_DIR = os.path.join(os.path.dirname(__file__), '../models/stats/')
-PLOTS_SAVE_DIR = os.path.join(os.path.dirname(__file__), '../models/plots/')
+MODELS_DIR = os.path.normpath(os.path.join(BASE_DIR, 'models'))
+
+# Models stats directory path
+MODELS_STATS_DIR = os.path.normpath(os.path.join(MODELS_DIR, 'stats'))
+
+# Plots save directory path
+PLOTS_SAVE_DIR = os.path.normpath(os.path.join(MODELS_DIR, 'plots'))
 
 # p53 variables
 P53_MODEL_NAME = 'p53_model'
