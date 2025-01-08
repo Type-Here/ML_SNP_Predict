@@ -12,7 +12,7 @@ dependencies:
   - imbalanced-learn
   - biopython
   - ansi2html
-  - pyqt=5.12.3
+  - pyqt=5.15.7
   - qasync
   - pymol-open-source
   - pyqtwebengine
