@@ -4,16 +4,20 @@ channels:
   - defaults
 dependencies:
   - python=3.10
-  - pandas=2.2.2
-  - requests=2.32.3
-  - matplotlib=3.8.0
+  - pandas
+  - requests
+  - matplotlib
+  - numpy=1.26.4
+  - scikit-learn
+  - imbalanced-learn
+  - biopython
+  - ansi2html
   - pyqt=5.12.3
-  - pymol-open-source=3.0.0
+  - qasync
+  - pymol-open-source
+  - pyqtwebengine
+  - py3dmol
   - pip
-  - pip:
-      - qasync
-      - scikit-learn
-      - imbalanced-learn
-      - biopython==1.84
-      - ansi2html
-      - py3Dmol
+  - mesa      # graphic compatibility for ARM MacOS
+  - pywin32   # Only for Windowsn
+      
