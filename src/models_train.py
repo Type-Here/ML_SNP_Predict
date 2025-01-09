@@ -1,4 +1,5 @@
 import sys
+import requests
 import traceback
 from PyQt5.QtCore import QThread, pyqtSignal
 
@@ -35,25 +36,28 @@ class TrainingThread(QThread):
         """
             Run the training process in a separate thread.
         """
-        if self.model_name == HRAS_MODEL_NAME:
-            self.__train_hras_model()
-            return
-
-        elif self.model_name == P53_MODEL_NAME:
-            self.__train_p53_model()
-
-        elif self.model_name == P53_PFAM_MODEL_NAME:
-            if not self.use_pfam:
-                self.log_signal.emit("Error: Pfam data is set to False.")
-                self.log_signal.emit("To train the Pfam model, set Pfam data to True.")
-                self.log_signal.emit("Error: Training failed.")
+        try:
+            if self.model_name == HRAS_MODEL_NAME:
+                self.__train_hras_model()
                 return
-            self.__train_p53_model()
-                
-        else:
-            self.log_signal.emit(f"Error: Model name not recognized: {self.model_name}")
-            self.log_signal.emit("Error: Training failed.")
 
+            elif self.model_name == P53_MODEL_NAME:
+                self.__train_p53_model()
+
+            elif self.model_name == P53_PFAM_MODEL_NAME:
+                if not self.use_pfam:
+                    self.log_signal.emit("Error: Pfam data is set to False.")
+                    self.log_signal.emit("To train the Pfam model, set Pfam data to True.")
+                    self.log_signal.emit("Error: Training failed.")
+                    return
+                self.__train_p53_model()
+                    
+            else:
+                self.log_signal.emit(f"Error: Model name not recognized: {self.model_name}")
+                self.log_signal.emit("Error: Training failed.")
+        except requests.exceptions.RequestException as e:
+            self.log_signal.emit(f"Error during training: Internet connection required. 
+                                   Check your connection.")
 
     # -------------------------------------------- P53 MODEL -------------------------------------------- #
 
