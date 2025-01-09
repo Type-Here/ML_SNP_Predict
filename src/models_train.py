@@ -56,8 +56,8 @@ class TrainingThread(QThread):
                 self.log_signal.emit(f"Error: Model name not recognized: {self.model_name}")
                 self.log_signal.emit("Error: Training failed.")
         except requests.exceptions.RequestException as e:
-            self.log_signal.emit(f"Error during training: Internet connection required. 
-                                   Check your connection.")
+            self.log_signal.emit(f"Error during training: Internet connection required." + \
+                                   "Check your connection.")
 
     # -------------------------------------------- P53 MODEL -------------------------------------------- #
 

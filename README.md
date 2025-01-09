@@ -31,7 +31,7 @@ The environment was tested using Mamba but should work with Conda as well.
 
 **Option 1: Minimal Environment**
 
-This option sets up the basic environment for running the project:
+This option sets up the basic environment for running the project (tested on Arch Linux and Windows 11):
 
 ```sh
 conda env create -f environment.yml
@@ -39,9 +39,9 @@ conda activate fia_env
 python tensor.py  # Installs TensorFlow and Keras -- 
 ```
 
-Using `python tensor.py` should install TensorFlow GPU version if a correct environment is detected. CPU one otherwise.
+Using `python tensor.py` should install TensorFlow GPU version if a correct environment is detected. CPU one otherwise. If you encounter any problem see troubleshooting below.
 
-**Option 2: Full Environment**
+**Option 2: Full Environment (Linux only)**
 
 This option installs all dependencies, including TensorFlow (CPU) and Keras:
 
@@ -68,6 +68,8 @@ The GUI will launch, allowing you to interact with the model and make prediction
 
 ## Replicating the Experiment
 
+**Note**: an Internet connection may be required to download Fasta sequences and proteins PDB on first load.  
+
 To replicate the results:
 
 - Load a Model:
@@ -83,6 +85,8 @@ To replicate the results:
 ## The Training Process
 
 When not already present, a new model can be automatically trained. The operations performed include:
+
+**Note**: an Internet connection is required to download the datasets.  
 
 - Preprocess the data:
     The pipeline cleans, extracts features, encodes, scales, and balances the dataset.
@@ -117,6 +121,40 @@ Core Dependencies:
 
 For a full list, see `full_env.yml`.
 
+## Troubleshooting
+
+### I can't install tensorflow / tensor.py returns error:  
+If you encounter issues while installing TensorFlow with GPU support, here are some steps you can follow to resolve the problem:  
+
+* **Refer to the Official Documentation**:  
+    The TensorFlow documentation provides detailed instructions for installing TensorFlow with GPU support. Make sure to follow the steps outlined in the TensorFlow GPU installation guide.
+    Ensure that your system meets all the prerequisites, including compatible versions of CUDA and cuDNN.
+
+* **Common Issues and Solutions**:  
+    CUDA and cuDNN Compatibility: Ensure that the versions of CUDA and cuDNN installed on your system are compatible with the version of TensorFlow you are trying to install. Refer to the TensorFlow compatibility table for more information.
+    Driver Issues: Make sure that your NVIDIA drivers are up to date. You can download the latest drivers from the NVIDIA website.
+    Environment Variables: Verify that the environment variables CUDA_HOME, CUDA_PATH, and LD_LIBRARY_PATH (on Linux) are set correctly.
+
+* **Installing TensorFlow CPU Version:**  
+    If you continue to experience issues with the GPU installation, you can install the CPU-only version of TensorFlow as an alternative. The CPU version does not require CUDA or cuDNN and is generally easier to install.  
+    To install the CPU-only version of TensorFlow, followed by Keras, use the following pip command:
+
+```sh
+pip install tensorflow
+pip install keras 
+```
+
+* Additional Resources:
+    For further assistance, you can refer to the TensorFlow community forums or the GitHub issues page for support from the TensorFlow community.
+
+By following these steps, you should be able to resolve most issues related to installing TensorFlow with GPU support. If you still encounter problems, consider using the CPU-only version as a temporary solution.
+
+
 ## License
 
 This project is licensed under the GPLv3 License.
+
+## No Warranties
+
+The current code and docs as provided "As-Is" without any guarantees or warranty.  
+While we strive to ensure the accuracy and usefulness of the repository, we cannot be held responsible for any issues or damages that may arise from following these instructions or executing the code.

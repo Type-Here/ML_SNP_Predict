@@ -124,7 +124,7 @@ def __add_input_layer(pfam:bool) -> tf.keras.layers.Layer:
         embedding_layers.append(Flatten()(embedding))
     
     if not pfam:
-        embedding = Embedding(input_dim=18, output_dim=8)(input_layers[-1]) # TODO: Check the number of domains
+        embedding = Embedding(input_dim=18, output_dim=8)(input_layers[-1]) # Check the number of domains
         embedding_layers.append(Flatten()(embedding))
 
     # Numerical inputs
