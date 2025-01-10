@@ -291,5 +291,5 @@ models/
 
 # Load codons_aa.json
 !data/protein/codons_aa.json
-protein_view.png
+protein_view*.png
 pymol_script.pml
