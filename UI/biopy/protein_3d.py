@@ -12,17 +12,18 @@ from PyQt5.QtCore import QUrl
 from src.config import PFAM_PATH, P53_PDB, HRAS_PDB
 
 def add_protein_3d_view(biopy_layout:QVBoxLayout, text_edit:QTextEdit, pdb_code = P53_PDB):
-    # Get the PDB file path
-    pdb_file = __get_pdb_file(pdb_code, text_edit)
-    if pdb_file is None:
-        print("PDB file not found.")
-        text_edit.append("PDB file not found: " + pdb_code + ".\n Unable to display the 3D structure.")
-        return False
+    output_image = f"protein_view_{pdb_code}.png"
     
-    output_image = "protein_view.png"
+    if not os.path.exists(output_image):
+        # Get the PDB file path
+        pdb_file = __get_pdb_file(pdb_code, text_edit)
+        if pdb_file is None:
+            print("PDB file not found.")
+            text_edit.append("PDB file not found: " + pdb_code + ".\n Unable to display the 3D structure.")
+            return False
 
-    # Generate the image using PyMOL
-    generate_pymol_image(pdb_file, output_image)
+        # Generate the image using PyMOL
+        generate_pymol_image(pdb_file, output_image)
 
     # Create the ProteinViewer widget to display the image
     viewer = ProteinViewer(output_image)
@@ -88,7 +89,16 @@ def generate_pymol_image(pdb_file, output_image):
     pymol_script = f"""
     load {pdb_file}
     show cartoon
-    color cyan
+    # Set white background
+    bg_color white
+
+    # Color each chain with a different color
+    color red, chain A
+    color green, chain B
+    color blue, chain C
+    color yellow, chain D
+    color cyan, chain E
+    color magenta, chain F
     png {output_image}, dpi=300
     quit
     """

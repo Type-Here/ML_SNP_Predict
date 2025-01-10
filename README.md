@@ -61,6 +61,7 @@ python UI/main.py
 
 - Using the Shell Script if your system runs bash:
 ```sh
+chmod +x run.sh #May not be necessary or sudo may be required
 ./run.sh
 ```
 
