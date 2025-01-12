@@ -65,6 +65,11 @@ chmod +x run.sh #May not be necessary or sudo may be required
 ./run.sh
 ```
 
+- On Windows Machines you can run:
+```bat
+.\run.bat
+```
+
 The GUI will launch, allowing you to interact with the model and make predictions on TP53 or HRAS mutations.
 
 ## Replicating the Experiment
@@ -153,6 +158,9 @@ pip install keras
     For further assistance, you can refer to the TensorFlow community forums or the GitHub issues page for support from the TensorFlow community.
 
 By following these steps, you should be able to resolve most issues related to installing TensorFlow with GPU support. If you still encounter problems, consider using the CPU-only version as a temporary solution.
+
+### I can't run the program / The program exits with writing/running error.
+For a correct usage, ensure that the program has writing permission in the working directory and thread management permissions. An internet connection may be needed to download the datasets.
 
 ## Known Issue
 * Each model can be widely improved.  
