@@ -83,6 +83,8 @@ To replicate the results:
 
 - The Model will load the output.
 
+![GUI Image](docs/gui-guide-img.png)
+
 ## The Training Process
 
 When not already present, a new model can be automatically trained. The operations performed include:
@@ -105,6 +107,8 @@ When not already present, a new model can be automatically trained. The operatio
 
 - Save the model:
     Saves it as a `.h5` and `.keras` format file.
+
+- Click on Load to reload the model and use its predictions.
 
 ## Dependencies
 
@@ -150,6 +154,9 @@ pip install keras
 
 By following these steps, you should be able to resolve most issues related to installing TensorFlow with GPU support. If you still encounter problems, consider using the CPU-only version as a temporary solution.
 
+## Known Issue
+* Each model can be widely improved.  
+* When no internet connection is provided, even if already running on a separate thread, pymol can sometimes temporarily block the GUI.  
 
 ## License
 
