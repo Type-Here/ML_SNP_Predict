@@ -74,7 +74,13 @@ QComboBox::drop-down {
     border: none;
     background-color: #505050;
     width: 5px;
+    color: white;
 }
+
+QComboBox QAbstractItemView {
+    color: white;
+}
+
 
 QComboBox:hover, QComboBox::hover, QComboBox::down-arrow:hover {
     opacity: 0.8;

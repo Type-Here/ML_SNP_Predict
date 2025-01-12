@@ -337,7 +337,9 @@ class MainApp(QMainWindow):
         stat_scroll_area = QScrollArea()
         stat_scroll_area.setWidget(stats_content)  
         stat_scroll_area.setWidgetResizable(True)
+        stat_scroll_area.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         stat_scroll_area.setMinimumHeight(300)
+        stat_scroll_area.setMaximumHeight(8000)
         stat_scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         stat_scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
 
@@ -349,12 +351,20 @@ class MainApp(QMainWindow):
         self.right_layout.addWidget(stat_scroll_area)
 
         # Accordion: Spacer #
-        self.right_layout.addSpacerItem(QSpacerItem(10, 100, QSizePolicy.Minimum, QSizePolicy.Expanding))
-
+        self.bottom_spacer_right = QSpacerItem(10, 100, QSizePolicy.Minimum, QSizePolicy.MinimumExpanding)
+        self.right_layout.addSpacerItem(self.bottom_spacer_right)
 
     def __toggle_section(self, section, button):
         """Mostra o nasconde una sezione accordion."""
+        bio_but = self.findChild(QToolButton, "biopython_3d_button")
+        sbut = self.findChild(QToolButton, "model_stats_button")
+        
         section.setVisible(button.isChecked())
+        if button.isChecked():
+            self.bottom_spacer_right.changeSize(10, 10, QSizePolicy.Minimum, QSizePolicy.Minimum)
+        elif not bio_but.isChecked() and not sbut.isChecked():
+            self.bottom_spacer_right.changeSize(10, 100, QSizePolicy.Minimum, QSizePolicy.MinimumExpanding)
+        self.right_layout.invalidate()
     
 
     def __disable_all_inputs(self):
